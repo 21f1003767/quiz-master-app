@@ -88,13 +88,11 @@ def login():
                 'message': 'User already logged in',
                 'user': {
                     'id': user.id,
-                    'name': user.name,
-                    'email': user.email,
-                    'role': user.role
+                    'name': user.full_name,
+                    'email': user.username,
+                    'role': 'USER'
                 }
             })
-        if session['role'] == 'ADMIN':
-            return redirect(url_for('admin.dashboard'))
         return redirect(url_for('user.dashboard'))
     
     form = LoginForm()
@@ -106,7 +104,7 @@ def login():
             password = data.get('password')
             
         elif form.validate_on_submit():
-            email = form.email.data
+            email = form.username.data
             password = form.password.data
         else:
             email = request.form.get('email')
@@ -121,13 +119,13 @@ def login():
             flash('Email and password are required', 'danger')
             return render_template('auth/login.html', form=form, title='Login')
         
-        user = User.query.filter_by(email=email).first()
+        user = User.query.filter_by(username=email).first()
         
-        if user and bcrypt.check_password_hash(user.password, password):
+        if user and user.check_password(password):
             session['user_id'] = user.id
-            session['name'] = user.name
-            session['email'] = user.email
-            session['role'] = user.role
+            session['name'] = user.full_name
+            session['email'] = user.username
+            session['role'] = 'USER'
             
             if is_json_requested():
                 return jsonify({
@@ -135,14 +133,12 @@ def login():
                     'message': 'Login successful',
                     'user': {
                         'id': user.id,
-                        'name': user.name,
-                        'email': user.email,
-                        'role': user.role
+                        'name': user.full_name,
+                        'email': user.username,
+                        'role': 'USER'
                     }
                 })
             
-            if user.role == 'ADMIN':
-                return redirect(url_for('admin.dashboard'))
             return redirect(url_for('user.dashboard'))
         else:
             if is_json_requested():
@@ -239,7 +235,7 @@ def admin_login():
         
         admin = Admin.query.filter_by(username=username).first()
         
-        if admin and bcrypt.check_password_hash(admin.password, password):
+        if admin and admin.check_password(password):
             session['admin_id'] = admin.id
             session['admin_username'] = admin.username
             
@@ -329,8 +325,6 @@ def register():
                 'message': 'You are already logged in'
             }), 400
         flash('You are already logged in', 'info')
-        if session['role'] == 'ADMIN':
-            return redirect(url_for('admin.dashboard'))
         return redirect(url_for('user.dashboard'))
     
     form = RegistrationForm()
@@ -343,8 +337,8 @@ def register():
             password = data.get('password')
             confirm_password = data.get('confirm_password')
         elif form.validate_on_submit():
-            name = form.name.data
-            email = form.email.data
+            name = form.full_name.data
+            email = form.username.data
             password = form.password.data
             confirm_password = form.confirm_password.data
         else:
@@ -360,7 +354,7 @@ def register():
         if password != confirm_password:
             validation_errors.append('Passwords do not match')
         
-        existing_user = User.query.filter_by(email=email).first()
+        existing_user = User.query.filter_by(username=email).first()
         if existing_user:
             validation_errors.append('Email already registered')
         
@@ -375,9 +369,13 @@ def register():
                 flash(error, 'danger')
             return render_template('auth/register.html', form=form, title='Register')
         
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        
-        new_user = User(name=name, email=email, password=hashed_password, role='USER')
+        new_user = User(
+            username=email, 
+            full_name=name,
+            qualification='', 
+            dob=None
+        )
+        new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
         
@@ -387,8 +385,8 @@ def register():
                 'message': 'Registration successful. You can now login.',
                 'user': {
                     'id': new_user.id,
-                    'name': new_user.name,
-                    'email': new_user.email
+                    'name': new_user.full_name,
+                    'email': new_user.username
                 }
             }), 201
         

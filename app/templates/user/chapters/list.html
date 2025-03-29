@@ -48,7 +48,7 @@
 
 {% block scripts %}
 <script>
-    // Get the subject ID from the URL
+    
     const pathParts = window.location.pathname.split('/');
     const subjectId = pathParts[pathParts.indexOf('subjects') + 1];
     
@@ -58,16 +58,13 @@
     
     async function loadSubjectAndChapters(subjectId) {
         try {
-            // Load subject data and chapters in parallel
             const [subjectData, chaptersData] = await Promise.all([
                 API.getSubject(subjectId),
                 API.getChaptersBySubject(subjectId)
             ]);
             
-            // Update subject information
             updateSubjectInfo(subjectData.subject);
             
-            // Update chapter list
             updateChaptersList(chaptersData);
         } catch (error) {
             handleError(error);
@@ -97,7 +94,7 @@
     
     function updateChaptersList(chaptersData) {
         const container = document.getElementById('chapters-container');
-        container.innerHTML = ''; // Clear loading indicator
+        container.innerHTML = '';
         
         if (chaptersData.chapters.length === 0) {
             container.innerHTML = `
@@ -110,7 +107,6 @@
             return;
         }
         
-        // Create a card with all chapters
         container.innerHTML = `
             <div class="col-md-12">
                 <div class="card">

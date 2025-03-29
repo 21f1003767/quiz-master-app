@@ -6,7 +6,12 @@
 <div class="container">
     <div class="row mb-4">
         <div class="col-md-12">
-            <h2>Dashboard</h2>
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Dashboard</h2>
+                <a href="{{ url_for('auth.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Home
+                </a>
+            </div>
             <p>Welcome to your Quiz Master dashboard, <span id="user-name">{{ user.full_name }}</span>!</p>
         </div>
     </div>
@@ -34,7 +39,30 @@
                 </div>
             </div>
             
-            <div class="card">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Recent Quiz Scores</h5>
+                </div>
+                <div class="card-body">
+                    <div id="scores-container">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Loading recent scores...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="/user/quiz-history" class="btn btn-outline-success">
+                        <i class="bi bi-graph-up"></i> View Full History
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
                 <div class="card-header bg-info text-white">
                     <h5 class="card-title mb-0">Quick Links</h5>
                 </div>
@@ -67,29 +95,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">Recent Quiz Scores</h5>
-                </div>
-                <div class="card-body">
-                    <div id="scores-container">
-                        <div class="text-center">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p>Loading recent scores...</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer bg-transparent">
-                    <a href="/user/quiz-history" class="btn btn-outline-success">
-                        <i class="bi bi-graph-up"></i> View Full History
-                    </a>
-                </div>
-            </div>
             
             <div class="card">
                 <div class="card-header bg-warning text-dark">
@@ -103,14 +108,64 @@
             </div>
         </div>
     </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Performance Analytics</h5>
+                    <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#chartsCollapse" aria-expanded="true" aria-controls="chartsCollapse">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                </div>
+                <div class="collapse show" id="chartsCollapse">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <h6 class="text-muted mb-3">Score Trends</h6>
+                                <canvas id="scoresTrendChart" height="250"></canvas>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <h6 class="text-muted mb-3">Subject Performance</h6>
+                                <canvas id="subjectPerformanceChart" height="250"></canvas>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <h6 class="text-muted mb-3">Quiz Completion</h6>
+                                <canvas id="quizCompletionChart" height="200"></canvas>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <h6 class="text-muted mb-3">Performance Summary</h6>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div id="performanceSummary">
+                                            <div class="text-center">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p>Loading performance data...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         loadSubjects();
         loadRecentScores();
+        loadPerformanceCharts();
     });
     
     async function loadSubjects() {
@@ -118,7 +173,7 @@
             const result = await API.getSubjects();
             
             const container = document.getElementById('subjects-container');
-            container.innerHTML = ''; // Clear loading indicator
+            container.innerHTML = ''; 
             
             if (result.subjects.length === 0) {
                 container.innerHTML = `
@@ -131,7 +186,6 @@
                 return;
             }
             
-            // Display only up to 3 most recent subjects
             const recentSubjects = result.subjects.slice(0, 3);
             
             recentSubjects.forEach(subject => {
@@ -169,7 +223,7 @@
             const result = await API.getUserScores();
             
             const container = document.getElementById('scores-container');
-            container.innerHTML = ''; // Clear loading indicator
+            container.innerHTML = '';
             
             if (result.scores.length === 0) {
                 container.innerHTML = `
@@ -180,14 +234,12 @@
                 return;
             }
             
-            // Display only up to 5 most recent scores
             const recentScores = result.scores.slice(0, 5);
             
             const scoresList = document.createElement('ul');
             scoresList.className = 'list-group';
             
             recentScores.forEach(score => {
-                // Calculate badge class based on score percentage
                 let badgeClass = 'bg-danger';
                 const percentage = score.percentage;
                 
@@ -223,6 +275,298 @@
                 </div>
             `;
         }
+    }
+    
+    async function loadPerformanceCharts() {
+        try {
+            const scoresData = await API.getUserScores();
+            const subjectsData = await API.getSubjects();
+            
+                if (scoresData.scores.length === 0) {
+                document.getElementById('scoresTrendChart').parentNode.innerHTML = 
+                    '<div class="alert alert-info">No quiz data available to display trends.</div>';
+                document.getElementById('subjectPerformanceChart').parentNode.innerHTML = 
+                    '<div class="alert alert-info">No subject performance data available.</div>';
+                document.getElementById('quizCompletionChart').parentNode.innerHTML = 
+                    '<div class="alert alert-info">No quiz completion data available.</div>';
+                
+                const summaryContainer = document.getElementById('performanceSummary');
+                summaryContainer.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bi bi-graph-up fs-1 text-muted"></i>
+                        <p class="mt-3">No performance data available yet. Complete some quizzes to see your statistics.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const scores = scoresData.scores;
+            
+            const recentScores = scores.slice(0, 10).reverse(); 
+            createScoresTrendChart(recentScores);
+            
+            createSubjectPerformanceChart(scores, subjectsData.subjects);
+            
+            createQuizCompletionChart(scores, subjectsData.subjects);
+            
+            createPerformanceSummary(scores);
+            
+        } catch (error) {
+            console.error('Error loading performance data:', error);
+            const chartsContainer = document.querySelector('#chartsCollapse .card-body');
+            chartsContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> Error loading performance data: ${error.message}
+                </div>
+            `;
+        }
+    }
+    
+    function createScoresTrendChart(scores) {
+        const ctx = document.getElementById('scoresTrendChart').getContext('2d');
+        
+        const labels = scores.map(score => {
+            const date = new Date(score.attempt_date);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+        
+        const data = scores.map(score => score.percentage);
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Score %',
+                    data: data,
+                    fill: false,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    tension: 0.1,
+                    pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Score Percentage'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Quiz Date'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Score: ${context.raw}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function createSubjectPerformanceChart(scores, subjects) {
+        const subjectScores = {};
+        
+        scores.forEach(score => {
+            if (!subjectScores[score.subject_name]) {
+                subjectScores[score.subject_name] = {
+                    totalPercentage: 0,
+                    count: 0
+                };
+            }
+            
+            subjectScores[score.subject_name].totalPercentage += score.percentage;
+            subjectScores[score.subject_name].count += 1;
+        });
+        
+        const subjectNames = [];
+        const averageScores = [];
+        const backgroundColors = [];
+        
+        const colorPalette = [
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 206, 86, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(153, 102, 255, 0.7)',
+            'rgba(255, 159, 64, 0.7)',
+            'rgba(199, 199, 199, 0.7)'
+        ];
+        
+        let colorIndex = 0;
+        
+        for (const subjectName in subjectScores) {
+            const subject = subjectScores[subjectName];
+            const avgScore = subject.totalPercentage / subject.count;
+            
+            subjectNames.push(subjectName);
+            averageScores.push(avgScore.toFixed(1));
+            backgroundColors.push(colorPalette[colorIndex % colorPalette.length]);
+            colorIndex++;
+        }
+        
+        const ctx = document.getElementById('subjectPerformanceChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: subjectNames,
+                datasets: [{
+                    label: 'Average Score %',
+                    data: averageScores,
+                    backgroundColor: backgroundColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Average Score Percentage'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Average: ${context.raw}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function createQuizCompletionChart(scores, subjects) {
+        const attemptedQuizIds = new Set(scores.map(score => score.quiz_id));
+        const attemptedCount = attemptedQuizIds.size;
+        
+        const estimatedTotalQuizzes = Math.max(attemptedCount * 2, 10);
+        const pendingCount = estimatedTotalQuizzes - attemptedCount;
+        
+        const ctx = document.getElementById('quizCompletionChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Pending'],
+                datasets: [{
+                    data: [attemptedCount, pendingCount],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(220, 220, 220, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(220, 220, 220, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label;
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function createPerformanceSummary(scores) {
+        const summaryContainer = document.getElementById('performanceSummary');
+        
+        const totalQuizzes = scores.length;
+        const totalQuestions = scores.reduce((sum, score) => sum + score.total_questions, 0);
+        const totalCorrect = scores.reduce((sum, score) => sum + score.total_scored, 0);
+        const averageScore = totalQuizzes > 0 
+            ? (scores.reduce((sum, score) => sum + score.percentage, 0) / totalQuizzes).toFixed(1)
+            : 0;
+        
+        let highestScore = { percentage: 0 };
+        let lowestScore = { percentage: 100 };
+        
+        scores.forEach(score => {
+            if (score.percentage > highestScore.percentage) {
+                highestScore = score;
+            }
+            if (score.percentage < lowestScore.percentage) {
+                lowestScore = score;
+            }
+        });
+        
+        let performanceLevel = 'Needs Improvement';
+        let performanceClass = 'text-danger';
+        
+        if (averageScore >= 80) {
+            performanceLevel = 'Excellent';
+            performanceClass = 'text-success';
+        } else if (averageScore >= 60) {
+            performanceLevel = 'Good';
+            performanceClass = 'text-primary';
+        } else if (averageScore >= 40) {
+            performanceLevel = 'Average';
+            performanceClass = 'text-warning';
+        }
+        
+        summaryContainer.innerHTML = `
+            <div class="text-center mb-3">
+                <h3 class="${performanceClass} fw-bold">${performanceLevel}</h3>
+                <p class="text-muted">Average Score: ${averageScore}%</p>
+            </div>
+            <div class="row text-center">
+                <div class="col-6 mb-3">
+                    <div class="border rounded p-2">
+                        <h5>${totalQuizzes}</h5>
+                        <small class="text-muted">Quizzes Taken</small>
+                    </div>
+                </div>
+                <div class="col-6 mb-3">
+                    <div class="border rounded p-2">
+                        <h5>${totalCorrect}/${totalQuestions}</h5>
+                        <small class="text-muted">Questions Correct</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="border rounded p-2 bg-light">
+                        <h5 class="text-success">${highestScore.percentage}%</h5>
+                        <small class="text-muted">Highest Score</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="border rounded p-2 bg-light">
+                        <h5 class="text-danger">${lowestScore.percentage}%</h5>
+                        <small class="text-muted">Lowest Score</small>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 </script>
 {% endblock %} 
