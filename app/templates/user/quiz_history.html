@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Your Quiz History</h2>
+        <p>Review your performance and track your progress over time.</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Overall Performance</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5>Total Quizzes</h5>
+                                <h2>{{ total_quizzes }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5>Total Questions</h5>
+                                <h2>{{ total_questions }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5>Correct Answers</h5>
+                                <h2>{{ total_correct }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card {% if avg_score >= 60 %}bg-success{% else %}bg-danger{% endif %} text-white">
+                            <div class="card-body">
+                                <h5>Average Score</h5>
+                                <h2>{{ avg_score|round }}%</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subject-wise Performance -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">Subject-wise Performance</h5>
+            </div>
+            <div class="card-body">
+                {% if subject_performance %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Quizzes Attempted</th>
+                                <th>Total Questions</th>
+                                <th>Correct Answers</th>
+                                <th>Average Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for subject_id, data in subject_performance.items() %}
+                            <tr>
+                                <td>{{ data.name }}</td>
+                                <td>{{ data.total_quizzes }}</td>
+                                <td>{{ data.total_questions }}</td>
+                                <td>{{ data.total_correct }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar"
+                                             id="subject-progress-{{ subject_id }}"
+                                             role="progressbar" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ data.percentage|round }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p>No subject data available yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">Quiz Attempt History</h5>
+            </div>
+            <div class="card-body">
+                {% if scores %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Quiz</th>
+                                <th>Subject</th>
+                                <th>Chapter</th>
+                                <th>Attempt Date</th>
+                                <th>Score</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for score in scores %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ score.quiz.title }}</td>
+                                <td>{{ score.quiz.chapter.subject.name }}</td>
+                                <td>{{ score.quiz.chapter.name }}</td>
+                                <td>{{ score.time_stamp_of_attempt.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar"
+                                             id="score-progress-{{ score.id }}"
+                                             role="progressbar" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ score.total_scored }}/{{ score.total_questions }} ({{ (score.total_scored / score.total_questions * 100)|round }}%)
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('user.quiz_report', quiz_id=score.quiz_id) }}" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-file-bar-graph"></i> View Report
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p>You haven't attempted any quizzes yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% for subject_id, data in subject_performance.items() %}
+            var subjectProgressBar = document.getElementById('subject-progress-{{ subject_id }}');
+            var subjectPercent = {{ data.percentage|round }};
+            
+            subjectProgressBar.style.width = subjectPercent + '%';
+            subjectProgressBar.setAttribute('aria-valuenow', subjectPercent);
+            
+            if (subjectPercent >= 60) {
+                subjectProgressBar.classList.add('bg-success');
+            } else {
+                subjectProgressBar.classList.add('bg-danger');
+            }
+        {% endfor %}
+        
+        {% for score in scores %}
+            var scoreProgressBar = document.getElementById('score-progress-{{ score.id }}');
+            var scorePercent = {{ (score.total_scored / score.total_questions * 100)|round }};
+            
+            scoreProgressBar.style.width = scorePercent + '%';
+            scoreProgressBar.setAttribute('aria-valuenow', scorePercent);
+            
+            if (scorePercent >= 60) {
+                scoreProgressBar.classList.add('bg-success');
+            } else {
+                scoreProgressBar.classList.add('bg-danger');
+            }
+        {% endfor %}
+    });
+</script>
+{% endblock %} 

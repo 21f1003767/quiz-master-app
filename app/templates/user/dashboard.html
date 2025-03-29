@@ -55,6 +55,11 @@
                         </div>
                         <p class="mb-1">Score: {{ score.total_scored }}/{{ score.total_questions }} ({{ (score.total_scored / score.total_questions * 100)|round }}%)</p>
                         <small>Chapter: {{ score.quiz.chapter.name }} | Subject: {{ score.quiz.chapter.subject.name }}</small>
+                        <div class="mt-2">
+                            <a href="{{ url_for('user.quiz_report', quiz_id=score.quiz_id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-file-bar-graph"></i> View Detailed Report
+                            </a>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -87,17 +92,23 @@
             </div>
             <div class="card-body">
                 <div class="row text-center">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <a href="{{ url_for('user.subject_list') }}" class="btn btn-lg btn-primary mb-3 w-100">
                             <i class="bi bi-book"></i> Browse Subjects
                         </a>
                         <p>View all available subjects and their chapters</p>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <a href="#" class="btn btn-lg btn-success mb-3 w-100" data-bs-toggle="modal" data-bs-target="#latestQuizzesModal">
                             <i class="bi bi-lightning"></i> Quick Quiz Access
                         </a>
                         <p>Take recently added quizzes directly</p>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ url_for('user.quiz_history') }}" class="btn btn-lg btn-info mb-3 w-100">
+                            <i class="bi bi-graph-up"></i> View Quiz History
+                        </a>
+                        <p>Track your progress and detailed statistics</p>
                     </div>
                 </div>
             </div>

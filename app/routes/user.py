@@ -153,4 +153,79 @@ def quiz_result(quiz_id):
                           quiz=quiz,
                           score=score,
                           questions=questions,
-                          user_answers=user_answers) 
+                          user_answers=user_answers)
+
+@user.route('/quiz-history')
+@login_required
+def quiz_history():
+    user_id = session['user_id']
+    user = User.query.get(user_id)
+
+    scores = Score.query.filter_by(user_id=user_id).order_by(Score.time_stamp_of_attempt.desc()).all()
+    
+    total_quizzes = len(scores)
+    total_questions = sum(score.total_questions for score in scores)
+    total_correct = sum(score.total_scored for score in scores)
+    
+    avg_score = 0
+    if total_questions > 0:
+        avg_score = (total_correct / total_questions) * 100
+
+    subject_performance = {}
+    for score in scores:
+        subject_id = score.quiz.chapter.subject.id
+        subject_name = score.quiz.chapter.subject.name
+        
+        if subject_id not in subject_performance:
+            subject_performance[subject_id] = {
+                'name': subject_name,
+                'total_quizzes': 0,
+                'total_questions': 0,
+                'total_correct': 0,
+                'percentage': 0
+            }
+        
+        subject_performance[subject_id]['total_quizzes'] += 1
+        subject_performance[subject_id]['total_questions'] += score.total_questions
+        subject_performance[subject_id]['total_correct'] += score.total_scored
+
+    for subject_id in subject_performance:
+        total_q = subject_performance[subject_id]['total_questions']
+        total_c = subject_performance[subject_id]['total_correct']
+        if total_q > 0:
+            subject_performance[subject_id]['percentage'] = (total_c / total_q) * 100
+    
+    return render_template('user/quiz_history.html',
+                          title='Quiz History',
+                          user=user,
+                          scores=scores,
+                          total_quizzes=total_quizzes,
+                          total_questions=total_questions,
+                          total_correct=total_correct,
+                          avg_score=avg_score,
+                          subject_performance=subject_performance)
+
+@user.route('/quizzes/<int:quiz_id>/report')
+@login_required
+def quiz_report(quiz_id):
+    user_id = session['user_id']
+    quiz = Quiz.query.get_or_404(quiz_id)
+ 
+    score = Score.query.filter_by(user_id=user_id, quiz_id=quiz_id).first_or_404()
+ 
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+  
+    all_scores = Score.query.filter_by(quiz_id=quiz_id).all()
+    total_attempts = len(all_scores)
+ 
+    avg_score = 0
+    if total_attempts > 0:
+        avg_score = sum(s.total_scored for s in all_scores) / (total_attempts * len(questions)) * 100
+    
+    return render_template('user/quizzes/report.html',
+                          title=f'Quiz Report: {quiz.title}',
+                          quiz=quiz,
+                          score=score,
+                          questions=questions,
+                          total_attempts=total_attempts,
+                          avg_score=avg_score) 
