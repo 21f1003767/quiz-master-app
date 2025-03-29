@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="register-container">
+    <h2 class="text-center mb-4">Register Account</h2>
+    <form method="POST" action="{{ url_for('auth.register') }}">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            {{ form.username.label(class="form-label") }}
+            {% if form.username.errors %}
+                {{ form.username(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.username.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.username(class="form-control", placeholder="Enter your email") }}
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            {{ form.password.label(class="form-label") }}
+            {% if form.password.errors %}
+                {{ form.password(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.password.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.password(class="form-control", placeholder="Minimum 6 characters") }}
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            {{ form.confirm_password.label(class="form-label") }}
+            {% if form.confirm_password.errors %}
+                {{ form.confirm_password(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.confirm_password.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.confirm_password(class="form-control", placeholder="Re-enter your password") }}
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            {{ form.full_name.label(class="form-label") }}
+            {% if form.full_name.errors %}
+                {{ form.full_name(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.full_name.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.full_name(class="form-control", placeholder="Enter your full name") }}
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            {{ form.qualification.label(class="form-label") }}
+            {% if form.qualification.errors %}
+                {{ form.qualification(class="form-control is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.qualification.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.qualification(class="form-control", placeholder="e.g., Bachelor of Science") }}
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            {{ form.dob.label(class="form-label") }}
+            {% if form.dob.errors %}
+                {{ form.dob(class="form-control is-invalid", type="date") }}
+                <div class="invalid-feedback">
+                    {% for error in form.dob.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% else %}
+                {{ form.dob(class="form-control", type="date") }}
+            {% endif %}
+        </div>
+        <div class="d-grid">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+    <div class="text-center mt-3">
+        <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
+    </div>
+</div>
+{% endblock %} 
