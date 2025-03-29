@@ -73,6 +73,43 @@ class Quiz(db.Model):
     
     def __repr__(self):
         return f"Quiz('{self.title}')"
+        
+    def is_available(self):
+        """Check if the quiz is available for attempt based on date and time duration"""
+        today = datetime.utcnow().date()
+        current_time = datetime.utcnow().time()
+        
+        if today != self.date_of_quiz:
+            return False
+            
+        duration_parts = self.time_duration.split(':')
+        hours = int(duration_parts[0])
+        minutes = int(duration_parts[1])
+
+        total_minutes = hours * 60 + minutes
+        end_hour = (total_minutes // 60) % 24
+        end_minute = total_minutes % 60
+        
+        if current_time.hour > end_hour or (current_time.hour == end_hour and current_time.minute > end_minute):
+            return False
+            
+        return True
+        
+    def get_availability_window(self):
+        """Return the time window when this quiz is available"""
+        start_time = "00:00"
+        
+        duration_parts = self.time_duration.split(':')
+        hours = int(duration_parts[0])
+        minutes = int(duration_parts[1])
+        
+        total_minutes = hours * 60 + minutes
+        end_hour = (total_minutes // 60) % 24
+        end_minute = total_minutes % 60
+        
+        end_time = f"{end_hour:02d}:{end_minute:02d}"
+        
+        return f"{start_time} - {end_time}"
 
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)

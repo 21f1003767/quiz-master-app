@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from app.models.models import db
+from datetime import datetime
 
 def create_app():
     app = Flask(__name__)
@@ -9,7 +10,11 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     db.init_app(app)
-    
+    @app.context_processor
+    def utility_processor():
+        def now():
+            return datetime.utcnow()
+        return {'now': now}
   
     from app.routes.auth import auth
     app.register_blueprint(auth)

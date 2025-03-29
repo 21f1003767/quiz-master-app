@@ -75,6 +75,11 @@ def quiz_start(quiz_id):
             existing_score.total_scored, existing_score.total_questions), 'info')
         return redirect(url_for('user.quiz_list', chapter_id=quiz.chapter_id))
 
+    if not quiz.is_available():
+        availability_window = quiz.get_availability_window()
+        flash(f'This quiz is not available for attempt at this time. It is scheduled for {quiz.date_of_quiz.strftime("%Y-%m-%d")} during the time window {availability_window}.', 'warning')
+        return redirect(url_for('user.quiz_list', chapter_id=quiz.chapter_id))
+
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
     if not questions:
         flash('This quiz has no questions yet!', 'warning')
@@ -95,11 +100,9 @@ def quiz_submit(quiz_id):
     user_id = session['user_id']
     quiz = Quiz.query.get_or_404(quiz_id)
     
-    # Get questions
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
     total_questions = len(questions)
     
-    # Calculate score
     score = 0
     user_answers = {}
     

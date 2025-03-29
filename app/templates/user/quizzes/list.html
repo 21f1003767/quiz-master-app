@@ -41,6 +41,7 @@
                                 <th>Title</th>
                                 <th>Quiz Date</th>
                                 <th>Duration</th>
+                                <th>Time Window</th>
                                 <th>Questions</th>
                                 <th>Status</th>
                                 <th>Action</th>
@@ -53,23 +54,32 @@
                                 <td>{{ quiz.title }}</td>
                                 <td>{{ quiz.date_of_quiz.strftime('%Y-%m-%d') }}</td>
                                 <td>{{ quiz.time_duration }}</td>
+                                <td>{{ quiz.get_availability_window() }}</td>
                                 <td>{{ quiz.questions|length }}</td>
                                 <td>
                                     {% if quiz.id in user_scores %}
                                         <span class="badge bg-success">Completed</span>
+                                    {% elif quiz.is_available() %}
+                                        <span class="badge bg-primary">Available</span>
+                                    {% elif quiz.date_of_quiz > now().date() %}
+                                        <span class="badge bg-secondary">Upcoming</span>
                                     {% else %}
-                                        <span class="badge bg-warning">Not Attempted</span>
+                                        <span class="badge bg-danger">Expired</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if quiz.id in user_scores %}
-                                        <button class="btn btn-secondary btn-sm" disabled>
-                                            <i class="bi bi-check-circle"></i> Already Completed
-                                        </button>
-                                    {% else %}
+                                        <a href="{{ url_for('user.quiz_report', quiz_id=quiz.id) }}" class="btn btn-info btn-sm">
+                                            <i class="bi bi-file-text"></i> View Report
+                                        </a>
+                                    {% elif quiz.is_available() %}
                                         <a href="{{ url_for('user.quiz_start', quiz_id=quiz.id) }}" class="btn btn-primary btn-sm">
                                             <i class="bi bi-play-circle"></i> Start Quiz
                                         </a>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm" disabled>
+                                            <i class="bi bi-clock"></i> Not Available
+                                        </button>
                                     {% endif %}
                                 </td>
                             </tr>
