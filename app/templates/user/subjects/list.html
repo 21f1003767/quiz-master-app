@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Available Subjects</h2>
+        <p>Select a subject to view available chapters and quizzes.</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Subjects</h5>
+            </div>
+            <div class="card-body">
+                {% if subjects %}
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                    {% for subject in subjects %}
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title">{{ subject.name }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">{{ subject.description }}</p>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <strong>Chapters:</strong> {{ subject.chapters|length }}
+                                    </small>
+                                </p>
+                            </div>
+                            <div class="card-footer">
+                                <a href="{{ url_for('user.chapter_list', subject_id=subject.id) }}" class="btn btn-primary">View Chapters</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p>No subjects available yet. Please check back later.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Quizzes in {{ chapter.name }}</h2>
+        <p>Select a quiz to begin your test.</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Chapter Information</h5>
+            </div>
+            <div class="card-body">
+                <h4>{{ chapter.name }}</h4>
+                <p>{{ chapter.description }}</p>
+                <p><strong>Subject:</strong> {{ chapter.subject.name }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">Available Quizzes</h5>
+            </div>
+            <div class="card-body">
+                {% if quizzes %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Title</th>
+                                <th>Quiz Date</th>
+                                <th>Duration</th>
+                                <th>Questions</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for quiz in quizzes %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ quiz.title }}</td>
+                                <td>{{ quiz.date_of_quiz.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ quiz.time_duration }}</td>
+                                <td>{{ quiz.questions|length }}</td>
+                                <td>
+                                    {% if quiz.id in user_scores %}
+                                        <span class="badge bg-success">Completed</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Not Attempted</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if quiz.id in user_scores %}
+                                        <button class="btn btn-secondary btn-sm" disabled>
+                                            <i class="bi bi-check-circle"></i> Already Completed
+                                        </button>
+                                    {% else %}
+                                        <a href="{{ url_for('user.quiz_start', quiz_id=quiz.id) }}" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-play-circle"></i> Start Quiz
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p>No quizzes available in this chapter yet. Please check back later.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <a href="{{ url_for('user.chapter_list', subject_id=chapter.subject_id) }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Chapters
+        </a>
+    </div>
+</div>
+{% endblock %} 

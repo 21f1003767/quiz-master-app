@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ quiz.title }}</h4>
+                    <div id="timer" class="bg-light text-dark p-2 rounded">
+                        <i class="bi bi-clock"></i> <span id="time-remaining">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="quiz-info mb-4">
+                    <p><strong>Subject:</strong> {{ quiz.chapter.subject.name }}</p>
+                    <p><strong>Chapter:</strong> {{ quiz.chapter.name }}</p>
+                    <p><strong>Total Questions:</strong> {{ questions|length }}</p>
+                    <p><strong>Duration:</strong> {{ quiz.time_duration }}</p>
+                </div>
+                
+                <form id="quiz-form" action="{{ url_for('user.quiz_submit', quiz_id=quiz.id) }}" method="POST">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Warning: The quiz will be automatically submitted when the timer ends.
+                    </div>
+                    
+                    {% for question in questions %}
+                    <div class="card mb-4 question-card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Question {{ loop.index }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="question-text">{{ question.question_statement }}</p>
+                            
+                            <div class="options mt-3">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_option1" value="1">
+                                    <label class="form-check-label" for="q{{ question.id }}_option1">
+                                        {{ question.option1 }}
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_option2" value="2">
+                                    <label class="form-check-label" for="q{{ question.id }}_option2">
+                                        {{ question.option2 }}
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_option3" value="3">
+                                    <label class="form-check-label" for="q{{ question.id }}_option3">
+                                        {{ question.option3 }}
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}_option4" value="4">
+                                    <label class="form-check-label" for="q{{ question.id }}_option4">
+                                        {{ question.option4 }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="text-center mt-4">
+                        <button type="submit" id="submit-quiz" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Submit Quiz
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var totalSeconds = parseInt("{{ total_seconds }}");
+        var timerDisplay = document.getElementById('time-remaining');
+        var quizForm = document.getElementById('quiz-form');
+        
+        function updateTimer() {
+            var hours = Math.floor(totalSeconds / 3600);
+            var minutes = Math.floor((totalSeconds % 3600) / 60);
+            var seconds = totalSeconds % 60;
+            
+            var hoursStr, minutesStr, secondsStr;
+            
+            if (hours < 10) {
+                hoursStr = "0" + hours;
+            } else {
+                hoursStr = hours.toString();
+            }
+            
+            if (minutes < 10) {
+                minutesStr = "0" + minutes;
+            } else {
+                minutesStr = minutes.toString();
+            }
+            
+            if (seconds < 10) {
+                secondsStr = "0" + seconds;
+            } else {
+                secondsStr = seconds.toString();
+            }
+            
+            var timeString = hoursStr + ":" + minutesStr + ":" + secondsStr;
+            timerDisplay.textContent = timeString;
+            
+            if (totalSeconds <= 300) {
+                timerDisplay.parentNode.classList.remove('bg-light', 'text-dark');
+                timerDisplay.parentNode.classList.add('bg-danger', 'text-white');
+            } else if (totalSeconds <= 600) { // 10 minutes or less
+                timerDisplay.parentNode.classList.remove('bg-light', 'text-dark');
+                timerDisplay.parentNode.classList.add('bg-warning', 'text-dark');
+            }
+            
+            if (totalSeconds > 0) {
+                totalSeconds--;
+                setTimeout(updateTimer, 1000);
+            } else {
+                alert('Time is up! Your quiz will be submitted automatically.');
+                quizForm.submit();
+            }
+        }
+        
+        updateTimer();
+        
+        window.addEventListener('beforeunload', function(e) {
+            e.preventDefault();
+            e.returnValue = 'You are in the middle of a quiz. Are you sure you want to leave? Your progress will be lost.';
+        });
+        
+        quizForm.addEventListener('submit', function() {
+            window.removeEventListener('beforeunload', function(){});
+        });
+    });
+</script>
+{% endblock %} 

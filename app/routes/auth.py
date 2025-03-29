@@ -5,7 +5,6 @@ from functools import wraps
 
 auth = Blueprint('auth', __name__)
 
-# Login required decorators
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
