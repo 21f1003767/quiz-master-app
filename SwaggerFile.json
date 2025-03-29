@@ -1,0 +1,2995 @@
+{
+  "definitions": {
+    "Chapter": {
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "subject_id": {
+          "type": "integer"
+        },
+        "subject_name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Quiz": {
+      "properties": {
+        "chapter_id": {
+          "type": "integer"
+        },
+        "chapter_name": {
+          "type": "string"
+        },
+        "date_of_quiz": {
+          "format": "date",
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Subject": {
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "info": {
+    "description": "API for the Quiz Master application",
+    "termsOfService": "",
+    "title": "Quiz Master API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/admin/api/subjects": {
+      "get": {
+        "description": "Returns a list of all subjects in the system with additional admin information",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "subjects": {
+                      "items": {
+                        "properties": {
+                          "chapter_count": {
+                            "type": "integer"
+                          },
+                          "date_created": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "quiz_count": {
+                            "type": "integer"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Admin Subjects API",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/chapters": {
+      "get": {
+        "description": "Returns a list of all chapters",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "chapters": {
+                      "items": {
+                        "properties": {
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "subject_id": {
+                            "type": "integer"
+                          },
+                          "subject_name": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List Chapters",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/chapters/create": {
+      "get": {
+        "consumes": [
+          "application/json",
+          "application/x-www-form-urlencoded"
+        ],
+        "description": "Creates a new chapter with the provided data",
+        "parameters": [
+          {
+            "description": "Chapter name",
+            "in": "formData",
+            "name": "name",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Chapter description",
+            "in": "formData",
+            "name": "description",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Subject ID",
+            "in": "formData",
+            "name": "subject_id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "chapter": {
+                      "properties": {
+                        "description": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "subject_id": {
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "errors": {
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": false,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Create Chapter",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "consumes": [
+          "application/json",
+          "application/x-www-form-urlencoded"
+        ],
+        "description": "Creates a new chapter with the provided data",
+        "parameters": [
+          {
+            "description": "Chapter name",
+            "in": "formData",
+            "name": "name",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Chapter description",
+            "in": "formData",
+            "name": "description",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Subject ID",
+            "in": "formData",
+            "name": "subject_id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "chapter": {
+                      "properties": {
+                        "description": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "subject_id": {
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "errors": {
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": false,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Create Chapter",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/dashboard": {
+      "get": {
+        "description": "Returns statistics and recent subjects for the admin dashboard",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "counts": {
+                      "properties": {
+                        "chapters": {
+                          "type": "integer"
+                        },
+                        "quizzes": {
+                          "type": "integer"
+                        },
+                        "subjects": {
+                          "type": "integer"
+                        },
+                        "users": {
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "recent_subjects": {
+                      "items": {
+                        "properties": {
+                          "chapter_count": {
+                            "type": "integer"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Admin Dashboard",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/login": {
+      "get": {
+        "consumes": [
+          "application/x-www-form-urlencoded",
+          "application/json"
+        ],
+        "description": "Authenticate and login as an admin",
+        "parameters": [
+          {
+            "description": "Admin username",
+            "in": "formData",
+            "name": "username",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Admin password",
+            "in": "formData",
+            "name": "password",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "admin": {
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "username": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Login successful"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Login failed"
+          }
+        },
+        "summary": "Admin Login",
+        "tags": [
+          "auth"
+        ]
+      },
+      "post": {
+        "consumes": [
+          "application/x-www-form-urlencoded",
+          "application/json"
+        ],
+        "description": "Authenticate and login as an admin",
+        "parameters": [
+          {
+            "description": "Admin username",
+            "in": "formData",
+            "name": "username",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Admin password",
+            "in": "formData",
+            "name": "password",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "admin": {
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "username": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Login successful"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Login failed"
+          }
+        },
+        "summary": "Admin Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/admin/quizzes": {
+      "get": {
+        "description": "Returns a list of all quizzes",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "quizzes": {
+                      "items": {
+                        "properties": {
+                          "chapter_id": {
+                            "type": "integer"
+                          },
+                          "chapter_name": {
+                            "type": "string"
+                          },
+                          "date_of_quiz": {
+                            "format": "date",
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "subject_name": {
+                            "type": "string"
+                          },
+                          "time_duration": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List Quizzes",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/quizzes/create": {
+      "get": {
+        "consumes": [
+          "application/json",
+          "application/x-www-form-urlencoded"
+        ],
+        "description": "Creates a new quiz with the provided data",
+        "parameters": [
+          {
+            "description": "Quiz title",
+            "in": "formData",
+            "name": "title",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Chapter ID",
+            "in": "formData",
+            "name": "chapter_id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "description": "Date of quiz (YYYY-MM-DD)",
+            "format": "date",
+            "in": "formData",
+            "name": "date_of_quiz",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Time duration (HH:MM)",
+            "in": "formData",
+            "name": "time_duration",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Additional remarks",
+            "in": "formData",
+            "name": "remarks",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "quiz": {
+                      "properties": {
+                        "chapter_id": {
+                          "type": "integer"
+                        },
+                        "date_of_quiz": {
+                          "format": "date",
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "remarks": {
+                          "type": "string"
+                        },
+                        "time_duration": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "errors": {
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": false,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Create Quiz",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "consumes": [
+          "application/json",
+          "application/x-www-form-urlencoded"
+        ],
+        "description": "Creates a new quiz with the provided data",
+        "parameters": [
+          {
+            "description": "Quiz title",
+            "in": "formData",
+            "name": "title",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Chapter ID",
+            "in": "formData",
+            "name": "chapter_id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "description": "Date of quiz (YYYY-MM-DD)",
+            "format": "date",
+            "in": "formData",
+            "name": "date_of_quiz",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Time duration (HH:MM)",
+            "in": "formData",
+            "name": "time_duration",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Additional remarks",
+            "in": "formData",
+            "name": "remarks",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "quiz": {
+                      "properties": {
+                        "chapter_id": {
+                          "type": "integer"
+                        },
+                        "date_of_quiz": {
+                          "format": "date",
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "remarks": {
+                          "type": "string"
+                        },
+                        "time_duration": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "errors": {
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": false,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Create Quiz",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/quizzes/{id}": {
+      "get": {
+        "description": "Returns details of a specific quiz and its questions",
+        "parameters": [
+          {
+            "description": "Quiz ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "questions": {
+                      "items": {
+                        "properties": {
+                          "correct_option": {
+                            "type": "integer"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "options": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          },
+                          "question_statement": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "quiz": {
+                      "properties": {
+                        "chapter_id": {
+                          "type": "integer"
+                        },
+                        "chapter_name": {
+                          "type": "string"
+                        },
+                        "date_of_quiz": {
+                          "format": "date",
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "remarks": {
+                          "type": "string"
+                        },
+                        "subject_name": {
+                          "type": "string"
+                        },
+                        "time_duration": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          },
+          "404": {
+            "description": "Quiz not found"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Get Quiz Detail",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/quizzes/{quiz_id}/questions": {
+      "get": {
+        "description": "Returns a list of all questions for a specific quiz",
+        "parameters": [
+          {
+            "description": "Quiz ID",
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "questions": {
+                      "items": {
+                        "properties": {
+                          "correct_option": {
+                            "type": "integer"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "options": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          },
+                          "question_statement": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "quiz": {
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          },
+          "404": {
+            "description": "Quiz not found"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List Quiz Questions",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/quizzes/{quiz_id}/questions/create": {
+      "get": {
+        "consumes": [
+          "application/json",
+          "application/x-www-form-urlencoded"
+        ],
+        "description": "Creates a new question with the provided data",
+        "parameters": [
+          {
+            "description": "Quiz ID",
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Question text",
+            "in": "formData",
+            "name": "question_statement",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Option 1",
+            "in": "formData",
+            "name": "option1",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Option 2",
+            "in": "formData",
+            "name": "option2",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Option 3",
+            "in": "formData",
+            "name": "option3",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Option 4",
+            "in": "formData",
+            "name": "option4",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Correct option (1-4)",
+            "in": "formData",
+            "name": "correct_option",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "question": {
+                      "properties": {
+                        "correct_option": {
+                          "type": "integer"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "options": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "question_statement": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "errors": {
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": false,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          },
+          "404": {
+            "description": "Quiz not found"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Create Question",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "consumes": [
+          "application/json",
+          "application/x-www-form-urlencoded"
+        ],
+        "description": "Creates a new question with the provided data",
+        "parameters": [
+          {
+            "description": "Quiz ID",
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Question text",
+            "in": "formData",
+            "name": "question_statement",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Option 1",
+            "in": "formData",
+            "name": "option1",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Option 2",
+            "in": "formData",
+            "name": "option2",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Option 3",
+            "in": "formData",
+            "name": "option3",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Option 4",
+            "in": "formData",
+            "name": "option4",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Correct option (1-4)",
+            "in": "formData",
+            "name": "correct_option",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "question": {
+                      "properties": {
+                        "correct_option": {
+                          "type": "integer"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "options": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "question_statement": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "errors": {
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": false,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          },
+          "404": {
+            "description": "Quiz not found"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Create Question",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/subjects": {
+      "get": {
+        "description": "Returns a list of all subjects",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "subjects": {
+                      "items": {
+                        "properties": {
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List Subjects",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/subjects/create": {
+      "get": {
+        "consumes": [
+          "application/json",
+          "application/x-www-form-urlencoded"
+        ],
+        "description": "Creates a new subject with the provided data",
+        "parameters": [
+          {
+            "description": "Subject name",
+            "in": "formData",
+            "name": "name",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Subject description",
+            "in": "formData",
+            "name": "description",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "subject": {
+                      "properties": {
+                        "description": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "errors": {
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": false,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Create Subject",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "consumes": [
+          "application/json",
+          "application/x-www-form-urlencoded"
+        ],
+        "description": "Creates a new subject with the provided data",
+        "parameters": [
+          {
+            "description": "Subject name",
+            "in": "formData",
+            "name": "name",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Subject description",
+            "in": "formData",
+            "name": "description",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "subject": {
+                      "properties": {
+                        "description": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "errors": {
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": false,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Create Subject",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/subjects/delete/{id}": {
+      "delete": {
+        "description": "Deletes a subject with the specified ID",
+        "parameters": [
+          {
+            "description": "Subject ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          },
+          "404": {
+            "description": "Subject not found"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Delete Subject",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "description": "Deletes a subject with the specified ID",
+        "parameters": [
+          {
+            "description": "Subject ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          },
+          "404": {
+            "description": "Subject not found"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Delete Subject",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/subjects/edit/{id}": {
+      "get": {
+        "consumes": [
+          "application/json",
+          "application/x-www-form-urlencoded"
+        ],
+        "description": "Updates an existing subject with the provided data",
+        "parameters": [
+          {
+            "description": "Subject ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Subject name",
+            "in": "formData",
+            "name": "name",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Subject description",
+            "in": "formData",
+            "name": "description",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "subject": {
+                      "properties": {
+                        "description": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "errors": {
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": false,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          },
+          "404": {
+            "description": "Subject not found"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Edit Subject",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "consumes": [
+          "application/json",
+          "application/x-www-form-urlencoded"
+        ],
+        "description": "Updates an existing subject with the provided data",
+        "parameters": [
+          {
+            "description": "Subject ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Subject name",
+            "in": "formData",
+            "name": "name",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Subject description",
+            "in": "formData",
+            "name": "description",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "subject": {
+                      "properties": {
+                        "description": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "errors": {
+                      "type": "object"
+                    },
+                    "success": {
+                      "example": false,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          },
+          "404": {
+            "description": "Subject not found"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Edit Subject",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/subjects/{id}": {
+      "get": {
+        "description": "Returns details of a specific subject and its chapters",
+        "parameters": [
+          {
+            "description": "Subject ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "chapters": {
+                      "items": {
+                        "properties": {
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "subject_id": {
+                            "type": "integer"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "subject": {
+                      "properties": {
+                        "description": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Not authenticated as admin"
+          },
+          "404": {
+            "description": "Subject not found"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Get Subject Detail",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api": {
+      "get": {
+        "description": "Get information about the API endpoints and documentation",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          }
+        },
+        "summary": "API Information",
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/login": {
+      "get": {
+        "consumes": [
+          "application/x-www-form-urlencoded",
+          "application/json"
+        ],
+        "description": "Authenticate and login a user",
+        "parameters": [
+          {
+            "description": "User email",
+            "in": "formData",
+            "name": "email",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "User password",
+            "in": "formData",
+            "name": "password",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "user": {
+                      "properties": {
+                        "email": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Login successful"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Login failed"
+          }
+        },
+        "summary": "User Login",
+        "tags": [
+          "auth"
+        ]
+      },
+      "post": {
+        "consumes": [
+          "application/x-www-form-urlencoded",
+          "application/json"
+        ],
+        "description": "Authenticate and login a user",
+        "parameters": [
+          {
+            "description": "User email",
+            "in": "formData",
+            "name": "email",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "User password",
+            "in": "formData",
+            "name": "password",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "user": {
+                      "properties": {
+                        "email": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Login successful"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Login failed"
+          }
+        },
+        "summary": "User Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/logout": {
+      "get": {
+        "description": "Logs out a user and clears the session",
+        "responses": {
+          "302": {
+            "description": "Redirects to the home page after successful logout"
+          }
+        },
+        "summary": "User Logout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/register": {
+      "get": {
+        "consumes": [
+          "application/x-www-form-urlencoded",
+          "application/json"
+        ],
+        "description": "Register a new user account",
+        "parameters": [
+          {
+            "description": "User full name",
+            "in": "formData",
+            "name": "name",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "User email",
+            "in": "formData",
+            "name": "email",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "User password",
+            "in": "formData",
+            "name": "password",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Password confirmation",
+            "in": "formData",
+            "name": "confirm_password",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "user": {
+                      "properties": {
+                        "email": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Registration successful"
+          },
+          "400": {
+            "description": "Invalid input or user already exists"
+          }
+        },
+        "summary": "User Registration",
+        "tags": [
+          "auth"
+        ]
+      },
+      "post": {
+        "consumes": [
+          "application/x-www-form-urlencoded",
+          "application/json"
+        ],
+        "description": "Register a new user account",
+        "parameters": [
+          {
+            "description": "User full name",
+            "in": "formData",
+            "name": "name",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "User email",
+            "in": "formData",
+            "name": "email",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "User password",
+            "in": "formData",
+            "name": "password",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "description": "Password confirmation",
+            "in": "formData",
+            "name": "confirm_password",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "user": {
+                      "properties": {
+                        "email": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Registration successful"
+          },
+          "400": {
+            "description": "Invalid input or user already exists"
+          }
+        },
+        "summary": "User Registration",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/user/chapters/{chapter_id}/quizzes": {
+      "get": {
+        "description": "Returns all quizzes for a specific chapter",
+        "parameters": [
+          {
+            "description": "ID of the chapter",
+            "in": "path",
+            "name": "chapter_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "chapter": {
+                      "properties": {
+                        "description": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "subject_id": {
+                          "type": "integer"
+                        },
+                        "subject_name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "quizzes": {
+                      "items": {
+                        "properties": {
+                          "availability_end": {
+                            "format": "time",
+                            "type": "string"
+                          },
+                          "availability_start": {
+                            "format": "time",
+                            "type": "string"
+                          },
+                          "availability_window": {
+                            "type": "string"
+                          },
+                          "date_of_quiz": {
+                            "format": "date",
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "is_available": {
+                            "type": "boolean"
+                          },
+                          "time_duration": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "user_score": {
+                            "nullable": true,
+                            "properties": {
+                              "percentage": {
+                                "format": "float",
+                                "type": "number"
+                              },
+                              "score_id": {
+                                "type": "integer"
+                              },
+                              "total_questions": {
+                                "type": "integer"
+                              },
+                              "total_scored": {
+                                "type": "integer"
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "404": {
+            "description": "Chapter not found"
+          }
+        },
+        "summary": "List Quizzes",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/user/dashboard": {
+      "get": {
+        "description": "Returns user information, recent subjects, and recent scores",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "recent_scores": {
+                      "items": {
+                        "properties": {
+                          "attempt_date": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "chapter_name": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "percentage": {
+                            "format": "float",
+                            "type": "number"
+                          },
+                          "quiz_id": {
+                            "type": "integer"
+                          },
+                          "quiz_title": {
+                            "type": "string"
+                          },
+                          "subject_name": {
+                            "type": "string"
+                          },
+                          "total_questions": {
+                            "type": "integer"
+                          },
+                          "total_scored": {
+                            "type": "integer"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "recent_subjects": {
+                      "items": {
+                        "properties": {
+                          "chapters_count": {
+                            "type": "integer"
+                          },
+                          "created_at": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "user": {
+                      "properties": {
+                        "dob": {
+                          "format": "date",
+                          "type": "string"
+                        },
+                        "full_name": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "qualification": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          }
+        },
+        "summary": "User Dashboard",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/user/quizzes/{quiz_id}/questions": {
+      "get": {
+        "description": "Returns all questions for a specific quiz",
+        "parameters": [
+          {
+            "description": "ID of the quiz",
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "questions": {
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "options": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          },
+                          "question_statement": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "quiz_id": {
+                      "type": "integer"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "time_duration": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "total_questions": {
+                      "type": "integer"
+                    },
+                    "total_seconds": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "403": {
+            "description": "Quiz already attempted or not available"
+          },
+          "404": {
+            "description": "Quiz not found or has no questions"
+          }
+        },
+        "summary": "Quiz Questions",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/user/quizzes/{quiz_id}/submit": {
+      "post": {
+        "description": "Submit answers for a quiz and get the score",
+        "parameters": [
+          {
+            "description": "ID of the quiz",
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "answers": {
+                    "additionalProperties": {
+                      "type": "integer"
+                    },
+                    "example": {
+                      "1": 3,
+                      "2": 1,
+                      "3": 4
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "description": "Quiz answers",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "percentage": {
+                      "format": "float",
+                      "type": "number"
+                    },
+                    "question_results": {
+                      "items": {
+                        "properties": {
+                          "correct": {
+                            "type": "boolean"
+                          },
+                          "correct_option": {
+                            "type": "integer"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "user_answer": {
+                            "type": "integer"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "score_id": {
+                      "type": "integer"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "total_questions": {
+                      "type": "integer"
+                    },
+                    "total_scored": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "Invalid input or no answers provided"
+          },
+          "403": {
+            "description": "Quiz already attempted"
+          },
+          "404": {
+            "description": "Quiz not found or has no questions"
+          }
+        },
+        "summary": "Submit Quiz",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/user/scores": {
+      "get": {
+        "description": "Returns all scores for the current user",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "scores": {
+                      "items": {
+                        "properties": {
+                          "attempt_date": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "chapter_name": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "percentage": {
+                            "format": "float",
+                            "type": "number"
+                          },
+                          "quiz_id": {
+                            "type": "integer"
+                          },
+                          "quiz_title": {
+                            "type": "string"
+                          },
+                          "subject_name": {
+                            "type": "string"
+                          },
+                          "total_questions": {
+                            "type": "integer"
+                          },
+                          "total_scored": {
+                            "type": "integer"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          }
+        },
+        "summary": "User Scores",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/user/search": {
+      "get": {
+        "description": "Performs a search across subjects, chapters, and quizzes",
+        "parameters": [
+          {
+            "description": "Search query",
+            "in": "query",
+            "name": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Type of content to search (all, subjects, chapters, quizzes)",
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "all",
+                "subjects",
+                "chapters",
+                "quizzes"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "chapters": {
+                      "items": {
+                        "$ref": "#/definitions/Chapter"
+                      },
+                      "type": "array"
+                    },
+                    "query": {
+                      "type": "string"
+                    },
+                    "quizzes": {
+                      "items": {
+                        "$ref": "#/definitions/Quiz"
+                      },
+                      "type": "array"
+                    },
+                    "search_type": {
+                      "type": "string"
+                    },
+                    "subjects": {
+                      "items": {
+                        "$ref": "#/definitions/Subject"
+                      },
+                      "type": "array"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          }
+        },
+        "summary": "Search",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/user/subjects": {
+      "get": {
+        "description": "Returns a list of all available subjects",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "subjects": {
+                      "items": {
+                        "properties": {
+                          "chapters_count": {
+                            "type": "integer"
+                          },
+                          "created_at": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          }
+        },
+        "summary": "Subjects List",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/user/subjects/{subject_id}/chapters": {
+      "get": {
+        "description": "Returns all chapters for a specific subject",
+        "parameters": [
+          {
+            "description": "ID of the subject",
+            "in": "path",
+            "name": "subject_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "chapters": {
+                      "items": {
+                        "properties": {
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "quiz_count": {
+                            "type": "integer"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "subject": {
+                      "properties": {
+                        "description": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "404": {
+            "description": "Subject not found"
+          }
+        },
+        "summary": "List Chapters",
+        "tags": [
+          "user"
+        ]
+      }
+    }
+  },
+  "securityDefinitions": {
+    "sessionAuth": {
+      "in": "cookie",
+      "name": "session",
+      "type": "apiKey"
+    }
+  },
+  "swagger": "2.0"
+}

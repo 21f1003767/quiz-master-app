@@ -3,56 +3,86 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-12">
-        <h2>Available Subjects</h2>
-        <p>Select a subject to view available chapters and quizzes.</p>
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Available Subjects</h2>
+            <p>Select a subject to view its chapters and quizzes.</p>
+        </div>
     </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Subjects</h5>
+    
+    <div id="subjects-container" class="row">
+        <div class="col-md-12 text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
             </div>
-            <div class="card-body">
-                {% if subjects %}
-                <div class="row row-cols-1 row-cols-md-3 g-4">
-                    {% for subject in subjects %}
-                    <div class="col">
-                        <div class="card h-100">
-                            <div class="card-header bg-light">
-                                <h5 class="card-title">{{ subject.name }}</h5>
-                            </div>
-                            <div class="card-body">
-                                <p class="card-text">{{ subject.description }}</p>
-                                <p class="card-text">
-                                    <small class="text-muted">
-                                        <strong>Chapters:</strong> {{ subject.chapters|length }}
-                                    </small>
-                                </p>
-                            </div>
-                            <div class="card-footer">
-                                <a href="{{ url_for('user.chapter_list', subject_id=subject.id) }}" class="btn btn-primary">View Chapters</a>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p>No subjects available yet. Please check back later.</p>
-                {% endif %}
-            </div>
+            <p>Loading subjects...</p>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
         </div>
     </div>
 </div>
+{% endblock %}
 
-<div class="row mt-4">
-    <div class="col-md-12">
-        <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Back to Dashboard
-        </a>
-    </div>
-</div>
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSubjects();
+    });
+    
+    async function loadSubjects() {
+        try {
+            const result = await API.getSubjects();
+            
+            const container = document.getElementById('subjects-container');
+            container.innerHTML = ''; // Clear loading indicator
+            
+            if (result.subjects.length === 0) {
+                container.innerHTML = `
+                    <div class="col-md-12">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> No subjects available yet.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            result.subjects.forEach(subject => {
+                const subjectCard = document.createElement('div');
+                subjectCard.className = 'col-md-4 mb-4';
+                subjectCard.innerHTML = `
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">${subject.name}</h5>
+                            <p class="card-text">${subject.description || 'No description available'}</p>
+                            <p class="text-muted"><small>${subject.chapters_count} chapters available</small></p>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <a href="/user/subjects/${subject.id}/chapters" class="btn btn-primary">
+                                <i class="bi bi-book"></i> Browse Chapters
+                            </a>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(subjectCard);
+            });
+        } catch (error) {
+            const container = document.getElementById('subjects-container');
+            container.innerHTML = `
+                <div class="col-md-12">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Error loading subjects: ${error.message}
+                    </div>
+                </div>
+            `;
+        }
+    }
+</script>
 {% endblock %} 

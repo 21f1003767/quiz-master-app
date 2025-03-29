@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}API Documentation{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="card-title">Quiz Master API Documentation</h1>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h2>Overview</h2>
+                        <p>
+                            The Quiz Master API provides programmatic access to the Quiz Master application data and functionality.
+                            You can use this API to build custom clients, integrate with other applications, or develop mobile apps.
+                        </p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h2>Features</h2>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>Authentication</strong> - Login and register users
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>Subjects</strong> - Get a list of available subjects
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>Chapters</strong> - Get chapters for specific subjects
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>Quizzes</strong> - Get quizzes, questions, and submit answers
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>User Data</strong> - Get user scores and history
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>Search</strong> - Search for subjects, chapters, or quizzes
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-4">
+                        <h2>Authentication</h2>
+                        <p>
+                            API requests are authenticated using session cookies. To use the API:
+                        </p>
+                        <ol>
+                            <li>Login through the API login endpoint to establish a session</li>
+                            <li>Include the session cookie in subsequent requests</li>
+                        </ol>
+                        <p class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            All API endpoints return JSON data when requested with an <code>Accept: application/json</code> header.
+                        </p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h2>Example Usage</h2>
+                        <pre class="bg-light p-3 rounded"><code>
+// Login to the API
+fetch('/login', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+        email: 'user@example.com',
+        password: 'password'
+    })
+})
+.then(response => response.json())
+.then(data => console.log(data));
+
+// Get list of subjects
+fetch('/user/subjects', {
+    headers: {
+        'Accept': 'application/json'
+    },
+    credentials: 'include'
+})
+.then(response => response.json())
+.then(data => console.log(data));
+                        </code></pre>
+                    </div>
+
+                    <div class="text-center">
+                        <a href="/apidocs/" class="btn btn-primary btn-lg mt-3">
+                            <i class="fas fa-book me-2"></i>
+                            Explore API Documentation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

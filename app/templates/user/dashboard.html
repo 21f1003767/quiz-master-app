@@ -3,258 +3,226 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-12">
-        <h2>Welcome to Your Dashboard, {{ user.full_name }}</h2>
-        <p>Here you can attempt quizzes and track your progress.</p>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Available Subjects</h5>
-            </div>
-            <div class="card-body">
-                {% if subjects %}
-                <div class="list-group">
-                    {% for subject in subjects %}
-                    <a href="{{ url_for('user.chapter_list', subject_id=subject.id) }}" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">{{ subject.name }}</h5>
-                        </div>
-                        <p class="mb-1">{{ subject.description }}</p>
-                        <small>{{ subject.chapters|length }} chapter(s) available</small>
-                    </a>
-                    {% endfor %}
-                </div>
-                <div class="mt-3">
-                    <a href="{{ url_for('user.subject_list') }}" class="btn btn-outline-primary">View All Subjects</a>
-                </div>
-                {% else %}
-                <p>No subjects available yet. Please check back later.</p>
-                {% endif %}
-            </div>
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Dashboard</h2>
+            <p>Welcome to your Quiz Master dashboard, <span id="user-name">{{ user.full_name }}</span>!</p>
         </div>
     </div>
     
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-success text-white">
-                <h5 class="card-title mb-0">Recent Quiz Scores</h5>
-            </div>
-            <div class="card-body">
-                {% if recent_scores %}
-                <div class="list-group">
-                    {% for score in recent_scores %}
-                    <div class="list-group-item">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">{{ score.quiz.title }}</h5>
-                            <small>{{ score.time_stamp_of_attempt.strftime('%Y-%m-%d %H:%M') }}</small>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Recently Added Subjects</h5>
+                </div>
+                <div class="card-body">
+                    <div id="subjects-container" class="row">
+                        <div class="col-md-12 text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Loading subjects...</p>
                         </div>
-                        <p class="mb-1">Score: {{ score.total_scored }}/{{ score.total_questions }} ({{ (score.total_scored / score.total_questions * 100)|round }}%)</p>
-                        <small>Chapter: {{ score.quiz.chapter.name }} | Subject: {{ score.quiz.chapter.subject.name }}</small>
-                        <div class="mt-2">
-                            <a href="{{ url_for('user.quiz_report', quiz_id=score.quiz_id) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-file-bar-graph"></i> View Detailed Report
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="/user/subjects" class="btn btn-outline-primary">
+                        <i class="bi bi-book"></i> View All Subjects
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Quick Links</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <a href="/user/subjects" class="btn btn-outline-primary w-100 py-3">
+                                <i class="bi bi-book fs-3"></i><br>
+                                Browse Subjects
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="/user/search" class="btn btn-outline-success w-100 py-3">
+                                <i class="bi bi-search fs-3"></i><br>
+                                Search Content
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="/user/quiz-history" class="btn btn-outline-info w-100 py-3">
+                                <i class="bi bi-graph-up fs-3"></i><br>
+                                View Quiz History
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="/logout" class="btn btn-outline-danger w-100 py-3">
+                                <i class="bi bi-box-arrow-right fs-3"></i><br>
+                                Logout
                             </a>
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
-                {% else %}
-                <p>You haven't attempted any quizzes yet.</p>
-                {% endif %}
             </div>
         </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-info text-white">
-                <h5 class="card-title mb-0">Your Progress</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="scoreChart" width="400" height="200"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Quick Actions</h5>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-md-4">
-                        <a href="{{ url_for('user.subject_list') }}" class="btn btn-lg btn-primary mb-3 w-100">
-                            <i class="bi bi-book"></i> Browse Subjects
-                        </a>
-                        <p>View all available subjects and their chapters</p>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Recent Quiz Scores</h5>
+                </div>
+                <div class="card-body">
+                    <div id="scores-container">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Loading recent scores...</p>
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <a href="#" class="btn btn-lg btn-success mb-3 w-100" data-bs-toggle="modal" data-bs-target="#latestQuizzesModal">
-                            <i class="bi bi-lightning"></i> Quick Quiz Access
-                        </a>
-                        <p>Take recently added quizzes directly</p>
-                    </div>
-                    <div class="col-md-4">
-                        <a href="{{ url_for('user.quiz_history') }}" class="btn btn-lg btn-info mb-3 w-100">
-                            <i class="bi bi-graph-up"></i> View Quiz History
-                        </a>
-                        <p>Track your progress and detailed statistics</p>
-                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="/user/quiz-history" class="btn btn-outline-success">
+                        <i class="bi bi-graph-up"></i> View Full History
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0"><i class="bi bi-bell"></i> Notifications</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><i class="bi bi-info-circle"></i> Remember to complete your profile information</p>
+                    <p class="mb-2"><i class="bi bi-calendar-check"></i> Check upcoming quizzes in your enrolled subjects</p>
+                    <p class="mb-0"><i class="bi bi-trophy"></i> Complete quizzes to improve your score</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<div class="modal fade" id="latestQuizzesModal" tabindex="-1" aria-labelledby="latestQuizzesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="latestQuizzesModalLabel">Latest Quizzes</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="list-group">
-                    {% for subject in subjects %}
-                        {% if subject.chapters %}
-                            {% for chapter in subject.chapters %}
-                                {% if chapter.quizzes %}
-                                    {% for quiz in chapter.quizzes %}
-                                    <a href="{{ url_for('user.quiz_start', quiz_id=quiz.id) }}" class="list-group-item list-group-item-action">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h5 class="mb-1">{{ quiz.title }}</h5>
-                                            <small>{{ quiz.date_of_quiz.strftime('%Y-%m-%d') }}</small>
-                                        </div>
-                                        <p class="mb-1">{{ quiz.time_duration }} | {{ quiz.questions|length }} questions</p>
-                                        <small>Chapter: {{ chapter.name }} | Subject: {{ subject.name }}</small>
-                                        {% if quiz.id in attempted_quiz_ids %}
-                                        <span class="badge bg-success float-end">Completed</span>
-                                        {% else %}
-                                        <span class="badge bg-warning float-end">Not Attempted</span>
-                                        {% endif %}
-                                    </a>
-                                    {% endfor %}
-                                {% endif %}
-                            {% endfor %}
-                        {% endif %}
-                    {% endfor %}
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <a href="{{ url_for('user.subject_list') }}" class="btn btn-primary">View All Subjects</a>
-            </div>
-        </div>
-    </div>
-</div>
-
-{% if recent_scores %}
-<div id="score-data" style="display:none;">
-    {% for score in recent_scores %}
-    <div class="score-item" 
-         data-title="{{ score.quiz.title }}" 
-         data-score="{{ (score.total_scored / score.total_questions * 100)|round }}">
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var ctx = document.getElementById('scoreChart').getContext('2d');
+        loadSubjects();
+        loadRecentScores();
     });
-</script>
-
-
-{% if recent_scores %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var ctx = document.getElementById('scoreChart').getContext('2d');
-        
-        
-        var scoreElements = document.querySelectorAll('#score-data .score-item');
-        var labels = [];
-        var scores = [];
-        
-        scoreElements.forEach(function(element) {
-            labels.push(element.getAttribute('data-title'));
-            scores.push(parseInt(element.getAttribute('data-score')));
-        });
-        
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Quiz Scores (%)',
-                    data: scores,
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
-                    }
-                }
+    
+    async function loadSubjects() {
+        try {
+            const result = await API.getSubjects();
+            
+            const container = document.getElementById('subjects-container');
+            container.innerHTML = ''; // Clear loading indicator
+            
+            if (result.subjects.length === 0) {
+                container.innerHTML = `
+                    <div class="col-md-12">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> No subjects available yet.
+                        </div>
+                    </div>
+                `;
+                return;
             }
-        });
-    });
-</script>
-{% else %}
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var ctx = document.getElementById('scoreChart').getContext('2d');
-        
-        
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['No Data'],
-                datasets: [{
-                    label: 'Quiz Scores',
-                    data: [0],
-                    backgroundColor: 'rgba(200, 200, 200, 0.5)',
-                    borderColor: 'rgba(200, 200, 200, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function() {
-                                return 'No quiz attempts yet';
-                            }
-                        }
-                    }
-                }
+            
+            // Display only up to 3 most recent subjects
+            const recentSubjects = result.subjects.slice(0, 3);
+            
+            recentSubjects.forEach(subject => {
+                const subjectCard = document.createElement('div');
+                subjectCard.className = 'col-md-4 mb-3';
+                subjectCard.innerHTML = `
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">${subject.name}</h5>
+                            <p class="card-text small">${subject.description ? (subject.description.length > 60 ? subject.description.substr(0, 60) + '...' : subject.description) : 'No description available'}</p>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <a href="/user/subjects/${subject.id}/chapters" class="btn btn-sm btn-primary">
+                                <i class="bi bi-book"></i> Browse
+                            </a>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(subjectCard);
+            });
+        } catch (error) {
+            const container = document.getElementById('subjects-container');
+            container.innerHTML = `
+                <div class="col-md-12">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Error loading subjects: ${error.message}
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    async function loadRecentScores() {
+        try {
+            const result = await API.getUserScores();
+            
+            const container = document.getElementById('scores-container');
+            container.innerHTML = ''; // Clear loading indicator
+            
+            if (result.scores.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> You haven't attempted any quizzes yet.
+                    </div>
+                `;
+                return;
             }
-        });
-    });
+            
+            // Display only up to 5 most recent scores
+            const recentScores = result.scores.slice(0, 5);
+            
+            const scoresList = document.createElement('ul');
+            scoresList.className = 'list-group';
+            
+            recentScores.forEach(score => {
+                // Calculate badge class based on score percentage
+                let badgeClass = 'bg-danger';
+                const percentage = score.percentage;
+                
+                if (percentage >= 80) {
+                    badgeClass = 'bg-success';
+                } else if (percentage >= 60) {
+                    badgeClass = 'bg-warning text-dark';
+                } else if (percentage >= 40) {
+                    badgeClass = 'bg-info';
+                }
+                
+                const scoreItem = document.createElement('li');
+                scoreItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                scoreItem.innerHTML = `
+                    <div>
+                        <strong>${score.quiz_title}</strong>
+                        <div class="small text-muted">${score.subject_name} / ${score.chapter_name}</div>
+                        <div class="small text-muted">${new Date(score.attempt_date).toLocaleString()}</div>
+                    </div>
+                    <a href="/user/quizzes/${score.quiz_id}/report" class="badge ${badgeClass} text-decoration-none">
+                        ${score.total_scored}/${score.total_questions}
+                    </a>
+                `;
+                scoresList.appendChild(scoreItem);
+            });
+            
+            container.appendChild(scoresList);
+        } catch (error) {
+            const container = document.getElementById('scores-container');
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> Error loading scores: ${error.message}
+                </div>
+            `;
+        }
+    }
 </script>
-{% endif %}
 {% endblock %} 

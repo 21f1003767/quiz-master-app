@@ -3,103 +3,232 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-12">
-        <h2>Quizzes in {{ chapter.name }}</h2>
-        <p>Select a quiz to begin your test.</p>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Chapter Information</h5>
-            </div>
-            <div class="card-body">
-                <h4>{{ chapter.name }}</h4>
-                <p>{{ chapter.description }}</p>
-                <p><strong>Subject:</strong> {{ chapter.subject.name }}</p>
-            </div>
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 id="chapter-header">Quizzes</h2>
+            <p>Select a quiz to begin your test.</p>
         </div>
     </div>
-</div>
 
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-info text-white">
-                <h5 class="card-title mb-0">Available Quizzes</h5>
-            </div>
-            <div class="card-body">
-                {% if quizzes %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Title</th>
-                                <th>Quiz Date</th>
-                                <th>Duration</th>
-                                <th>Time Window</th>
-                                <th>Questions</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for quiz in quizzes %}
-                            <tr>
-                                <td>{{ loop.index }}</td>
-                                <td>{{ quiz.title }}</td>
-                                <td>{{ quiz.date_of_quiz.strftime('%Y-%m-%d') }}</td>
-                                <td>{{ quiz.time_duration }}</td>
-                                <td>{{ quiz.get_availability_window() }}</td>
-                                <td>{{ quiz.questions|length }}</td>
-                                <td>
-                                    {% if quiz.id in user_scores %}
-                                        <span class="badge bg-success">Completed</span>
-                                    {% elif quiz.is_available() %}
-                                        <span class="badge bg-primary">Available</span>
-                                    {% elif quiz.date_of_quiz > now().date() %}
-                                        <span class="badge bg-secondary">Upcoming</span>
-                                    {% else %}
-                                        <span class="badge bg-danger">Expired</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if quiz.id in user_scores %}
-                                        <a href="{{ url_for('user.quiz_report', quiz_id=quiz.id) }}" class="btn btn-info btn-sm">
-                                            <i class="bi bi-file-text"></i> View Report
-                                        </a>
-                                    {% elif quiz.is_available() %}
-                                        <a href="{{ url_for('user.quiz_start', quiz_id=quiz.id) }}" class="btn btn-primary btn-sm">
-                                            <i class="bi bi-play-circle"></i> Start Quiz
-                                        </a>
-                                    {% else %}
-                                        <button class="btn btn-secondary btn-sm" disabled>
-                                            <i class="bi bi-clock"></i> Not Available
-                                        </button>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+    <div id="chapter-info" class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Chapter Information</h5>
                 </div>
-                {% else %}
-                <p>No quizzes available in this chapter yet. Please check back later.</p>
-                {% endif %}
+                <div class="card-body">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Loading chapter information...</p>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row mt-4">
-    <div class="col-md-12">
-        <a href="{{ url_for('user.chapter_list', subject_id=chapter.subject_id) }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Back to Chapters
-        </a>
+    <div id="quizzes-container" class="row">
+        <div class="col-md-12 text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading quizzes...</p>
+        </div>
+    </div>
+
+    <div id="back-nav" class="row mt-4">
+        <div class="col-md-12">
+            <!-- Back button will be inserted here -->
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Get the chapter ID from the URL
+    const pathParts = window.location.pathname.split('/');
+    const chapterId = pathParts[pathParts.indexOf('chapters') + 1];
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        loadChapterAndQuizzes(chapterId);
+    });
+    
+    async function loadChapterAndQuizzes(chapterId) {
+        try {
+            // Get quizzes with chapter info
+            const quizzesData = await API.getQuizzesByChapter(chapterId);
+            
+            // Update chapter information
+            updateChapterInfo(quizzesData);
+            
+            // Update quizzes list
+            updateQuizzesList(quizzesData);
+            
+            // Update back navigation
+            updateBackNavigation(quizzesData.subject_id);
+        } catch (error) {
+            handleError(error);
+        }
+    }
+    
+    function updateChapterInfo(data) {
+        const chapterHeader = document.getElementById('chapter-header');
+        chapterHeader.textContent = `Quizzes in ${data.chapter_name}`;
+        
+        const chapterInfo = document.getElementById('chapter-info');
+        chapterInfo.innerHTML = `
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Chapter Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <h4>${data.chapter_name}</h4>
+                        <p><strong>Subject:</strong> ${data.subject_name}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function updateQuizzesList(data) {
+        const container = document.getElementById('quizzes-container');
+        container.innerHTML = ''; // Clear loading indicator
+        
+        if (data.quizzes.length === 0) {
+            container.innerHTML = `
+                <div class="col-md-12">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No quizzes available in this chapter yet. Please check back later.
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        // Create a card with quizzes table
+        container.innerHTML = `
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">Available Quizzes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Title</th>
+                                        <th>Quiz Date</th>
+                                        <th>Duration</th>
+                                        <th>Time Window</th>
+                                        <th>Questions</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="quizzes-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const quizzesList = document.getElementById('quizzes-list');
+        
+        data.quizzes.forEach((quiz, index) => {
+            // Determine quiz status
+            let status = '';
+            if (quiz.attempted) {
+                status = '<span class="badge bg-success">Completed</span>';
+            } else if (quiz.is_available) {
+                status = '<span class="badge bg-primary">Available</span>';
+            } else if (quiz.is_upcoming) {
+                status = '<span class="badge bg-secondary">Upcoming</span>';
+            } else {
+                status = '<span class="badge bg-danger">Expired</span>';
+            }
+            
+            // Determine action button
+            let actionButton = '';
+            if (quiz.attempted) {
+                actionButton = `
+                    <a href="/user/quizzes/${quiz.id}/report" class="btn btn-info btn-sm">
+                        <i class="bi bi-file-text"></i> View Report
+                    </a>
+                `;
+            } else if (quiz.is_available) {
+                actionButton = `
+                    <a href="/user/quizzes/${quiz.id}/start" class="btn btn-primary btn-sm">
+                        <i class="bi bi-play-circle"></i> Start Quiz
+                    </a>
+                `;
+            } else {
+                actionButton = `
+                    <button class="btn btn-secondary btn-sm" disabled>
+                        <i class="bi bi-clock"></i> Not Available
+                    </button>
+                `;
+            }
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${quiz.title}</td>
+                <td>${new Date(quiz.date_of_quiz).toLocaleDateString()}</td>
+                <td>${quiz.time_duration}</td>
+                <td>${quiz.availability_window}</td>
+                <td>${quiz.questions_count}</td>
+                <td>${status}</td>
+                <td>${actionButton}</td>
+            `;
+            quizzesList.appendChild(row);
+        });
+    }
+    
+    function updateBackNavigation(subjectId) {
+        const backNav = document.getElementById('back-nav');
+        backNav.innerHTML = `
+            <div class="col-md-12">
+                <a href="/user/subjects/${subjectId}/chapters" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Chapters
+                </a>
+            </div>
+        `;
+    }
+    
+    function handleError(error) {
+        const chapterInfo = document.getElementById('chapter-info');
+        const quizzesContainer = document.getElementById('quizzes-container');
+        
+        chapterInfo.innerHTML = `
+            <div class="col-md-12">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> Error loading chapter: ${error.message}
+                </div>
+            </div>
+        `;
+        
+        quizzesContainer.innerHTML = `
+            <div class="col-md-12">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> Error loading quizzes: ${error.message}
+                </div>
+            </div>
+        `;
+        
+        // Default back navigation when error occurs
+        const backNav = document.getElementById('back-nav');
+        backNav.innerHTML = `
+            <div class="col-md-12">
+                <a href="/user/subjects" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Subjects
+                </a>
+            </div>
+        `;
+    }
+</script>
 {% endblock %} 
