@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Chapter Management</h2>
+            <p>Create, edit, and delete chapters for subjects.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('admin.chapter_create') }}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Add New Chapter
+            </a>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h5 class="card-title mb-0">All Chapters</h5>
+        </div>
+        <div class="card-body">
+            {% if chapters %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Chapter Name</th>
+                            <th>Subject</th>
+                            <th>Description</th>
+                            <th>Quizzes</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for chapter in chapters %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ chapter.name }}</td>
+                            <td>{{ chapter.subject.name }}</td>
+                            <td>{{ chapter.description[:50] }}{% if chapter.description|length > 50 %}...{% endif %}</td>
+                            <td>{{ chapter.quizzes|length }}</td>
+                            <td>{{ chapter.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.chapter_edit', id=chapter.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <form action="{{ url_for('admin.chapter_delete', id=chapter.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this chapter? This will also delete all related quizzes and questions!');">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                No chapters have been created yet. Click the "Add New Chapter" button to create one.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

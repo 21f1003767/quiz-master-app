@@ -10,13 +10,12 @@ def create_app():
     
     db.init_app(app)
     
-    # Import and register blueprints
+  
     from app.routes.auth import auth
-    from app.routes.user import user
-    from app.routes.admin import admin
-    
     app.register_blueprint(auth)
-    app.register_blueprint(user, url_prefix='/user')
+
+        
+    from app.routes.admin import admin
     app.register_blueprint(admin, url_prefix='/admin')
     
     return app 

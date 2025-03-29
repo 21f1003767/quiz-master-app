@@ -8,16 +8,16 @@ def setup_database():
     app = create_app()
     
     with app.app_context():
-        # Create all tables
+        
         db.create_all()
         
-        # Check if admin already exists
+       
         admin_exists = Admin.query.filter_by(username='admin@quizmaster.com').first()
         
         if not admin_exists:
-            # Create admin user
+           
             admin = Admin(username='admin@quizmaster.com')
-            admin.set_password('admin123')  # Default password (should be changed in production)
+            admin.set_password('admin123') 
             db.session.add(admin)
             db.session.commit()
             print("Admin user created successfully!")

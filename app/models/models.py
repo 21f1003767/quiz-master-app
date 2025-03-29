@@ -6,7 +6,7 @@ db = SQLAlchemy()
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)  # Email as username
+    username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     full_name = db.Column(db.String(100), nullable=False)
     qualification = db.Column(db.String(100))
@@ -63,7 +63,7 @@ class Quiz(db.Model):
     chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'), nullable=False)
     title = db.Column(db.String(100), nullable=False)
     date_of_quiz = db.Column(db.Date, nullable=False)
-    time_duration = db.Column(db.String(5), nullable=False)  # Format: "HH:MM"
+    time_duration = db.Column(db.String(5), nullable=False)
     remarks = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -82,7 +82,7 @@ class Question(db.Model):
     option2 = db.Column(db.String(200), nullable=False)
     option3 = db.Column(db.String(200), nullable=False)
     option4 = db.Column(db.String(200), nullable=False)
-    correct_option = db.Column(db.Integer, nullable=False)  # 1, 2, 3, or 4
+    correct_option = db.Column(db.Integer, nullable=False)
     
     def __repr__(self):
         return f"Question('{self.question_statement[:30]}...')"
