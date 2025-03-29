@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Search Results</h2>
+            <p>Results for query: <strong>"{{ query }}"</strong></p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form action="{{ url_for('user.search') }}" method="GET" class="d-flex flex-wrap align-items-end">
+                        <div class="form-group me-3 mb-2 flex-grow-1">
+                            <label for="query">Search Query</label>
+                            <input type="text" name="query" id="query" class="form-control" value="{{ query }}" required>
+                        </div>
+                        <div class="form-group me-3 mb-2">
+                            <label for="type">Search In</label>
+                            <select name="type" id="type" class="form-select">
+                                <option value="all" {% if search_type == 'all' %}selected{% endif %}>All</option>
+                                <option value="subjects" {% if search_type == 'subjects' %}selected{% endif %}>Subjects</option>
+                                <option value="chapters" {% if search_type == 'chapters' %}selected{% endif %}>Chapters</option>
+                                <option value="quizzes" {% if search_type == 'quizzes' %}selected{% endif %}>Quizzes</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if search_type in ['all', 'subjects'] and subjects %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Subjects ({{ subjects|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for subject in subjects %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ subject.name }}</h5>
+                                    <p class="card-text">{{ subject.description[:100] }}{% if subject.description|length > 100 %}...{% endif %}</p>
+                                    <p class="text-muted"><small>{{ subject.chapters|length }} chapters available</small></p>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <a href="{{ url_for('user.chapter_list', subject_id=subject.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-book"></i> View Chapters
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if search_type in ['all', 'chapters'] and chapters %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Chapters ({{ chapters|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for chapter in chapters %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <p class="mb-0"><small>Subject: <a href="{{ url_for('user.chapter_list', subject_id=chapter.subject.id) }}">{{ chapter.subject.name }}</a></small></p>
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ chapter.name }}</h5>
+                                    <p class="card-text">{{ chapter.description[:100] }}{% if chapter.description|length > 100 %}...{% endif %}</p>
+                                    <p class="text-muted"><small>{{ chapter.quizzes|length }} quizzes available</small></p>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <a href="{{ url_for('user.quiz_list', chapter_id=chapter.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-journal-check"></i> View Quizzes
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if search_type in ['all', 'quizzes'] and quizzes %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">Quizzes ({{ quizzes|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for quiz in quizzes %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <p class="mb-0"><small>
+                                        Chapter: <a href="{{ url_for('user.quiz_list', chapter_id=quiz.chapter.id) }}">{{ quiz.chapter.name }}</a> | 
+                                        Subject: <a href="{{ url_for('user.chapter_list', subject_id=quiz.chapter.subject.id) }}">{{ quiz.chapter.subject.name }}</a>
+                                    </small></p>
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ quiz.title }}</h5>
+                                    <p class="card-text">{{ quiz.remarks[:100] if quiz.remarks else 'No description available' }}{% if quiz.remarks and quiz.remarks|length > 100 %}...{% endif %}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-info">{{ quiz.questions|length }} questions</span>
+                                        {% if quiz.id in attempted_quiz_ids %}
+                                        <span class="badge bg-success">Attempted</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Not attempted</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent d-flex justify-content-between">
+                                    <a href="{{ url_for('user.quiz_start', quiz_id=quiz.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-info-circle"></i> Details
+                                    </a>
+                                    {% if quiz.id not in attempted_quiz_ids %}
+                                    <a href="{{ url_for('user.quiz_start', quiz_id=quiz.id) }}" class="btn btn-sm btn-success">
+                                        <i class="bi bi-play-fill"></i> Take Quiz
+                                    </a>
+                                    {% else %}
+                                    <a href="{{ url_for('user.quiz_report', quiz_id=quiz.id) }}" class="btn btn-sm btn-info">
+                                        <i class="bi bi-graph-up"></i> View Results
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if query and not subjects and not chapters and not quizzes %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> No results found for your search query.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-12">
+            <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

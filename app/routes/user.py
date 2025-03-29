@@ -228,4 +228,52 @@ def quiz_report(quiz_id):
                           score=score,
                           questions=questions,
                           total_attempts=total_attempts,
-                          avg_score=avg_score) 
+                          avg_score=avg_score)
+
+@user.route('/search', methods=['GET'])
+@login_required
+def search():
+    query = request.args.get('query', '')
+    search_type = request.args.get('type', 'all')
+    
+    if not query:
+        return render_template('user/search/results.html', 
+                               title='Search Results',
+                               query='',
+                               search_type='all',
+                               subjects=[],
+                               chapters=[],
+                               quizzes=[])
+    
+    subjects = []
+    if search_type in ['all', 'subjects']:
+        subjects = Subject.query.filter(
+            (Subject.name.ilike(f'%{query}%')) |
+            (Subject.description.ilike(f'%{query}%'))
+        ).all()
+    
+    chapters = []
+    if search_type in ['all', 'chapters']:
+        chapters = Chapter.query.filter(
+            (Chapter.name.ilike(f'%{query}%')) |
+            (Chapter.description.ilike(f'%{query}%'))
+        ).all()
+    
+    quizzes = []
+    if search_type in ['all', 'quizzes']:
+        quizzes = Quiz.query.filter(
+            (Quiz.title.ilike(f'%{query}%')) |
+            (Quiz.remarks.ilike(f'%{query}%'))
+        ).all()
+    
+    user_id = session['user_id']
+    attempted_quiz_ids = [score.quiz_id for score in Score.query.filter_by(user_id=user_id).all()]
+    
+    return render_template('user/search/results.html', 
+                           title='Search Results',
+                           query=query,
+                           search_type=search_type,
+                           subjects=subjects,
+                           chapters=chapters,
+                           quizzes=quizzes,
+                           attempted_quiz_ids=attempted_quiz_ids) 

@@ -284,4 +284,70 @@ def user_list():
     users = User.query.all()
     return render_template('admin/users/list.html', 
                            title='User Management',
-                           users=users) 
+                           users=users)
+
+@admin.route('/search', methods=['GET'])
+@admin_required
+def search():
+    query = request.args.get('query', '')
+    search_type = request.args.get('type', 'all')
+    
+    if not query:
+        return render_template('admin/search/results.html', 
+                               title='Search Results',
+                               query='',
+                               search_type='all',
+                               users=[],
+                               subjects=[],
+                               chapters=[],
+                               quizzes=[],
+                               questions=[])
+
+    users = []
+    if search_type in ['all', 'users']:
+        users = User.query.filter(
+            (User.username.ilike(f'%{query}%')) |
+            (User.full_name.ilike(f'%{query}%')) |
+            (User.qualification.ilike(f'%{query}%'))
+        ).all()
+   
+    subjects = []
+    if search_type in ['all', 'subjects']:
+        subjects = Subject.query.filter(
+            (Subject.name.ilike(f'%{query}%')) |
+            (Subject.description.ilike(f'%{query}%'))
+        ).all()
+    
+    chapters = []
+    if search_type in ['all', 'chapters']:
+        chapters = Chapter.query.filter(
+            (Chapter.name.ilike(f'%{query}%')) |
+            (Chapter.description.ilike(f'%{query}%'))
+        ).all()
+    
+    quizzes = []
+    if search_type in ['all', 'quizzes']:
+        quizzes = Quiz.query.filter(
+            (Quiz.title.ilike(f'%{query}%')) |
+            (Quiz.remarks.ilike(f'%{query}%'))
+        ).all()
+    
+    questions = []
+    if search_type in ['all', 'questions']:
+        questions = Question.query.filter(
+            (Question.question_statement.ilike(f'%{query}%')) |
+            (Question.option1.ilike(f'%{query}%')) |
+            (Question.option2.ilike(f'%{query}%')) |
+            (Question.option3.ilike(f'%{query}%')) |
+            (Question.option4.ilike(f'%{query}%'))
+        ).all()
+    
+    return render_template('admin/search/results.html', 
+                           title='Search Results',
+                           query=query,
+                           search_type=search_type,
+                           users=users,
+                           subjects=subjects,
+                           chapters=chapters,
+                           quizzes=quizzes,
+                           questions=questions) 

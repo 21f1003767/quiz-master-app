@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Search Results</h2>
+            <p>Results for query: <strong>"{{ query }}"</strong></p>
+        </div>
+    </div>
+
+    <!-- Search Form -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form action="{{ url_for('admin.search') }}" method="GET" class="d-flex flex-wrap align-items-end">
+                        <div class="form-group me-3 mb-2 flex-grow-1">
+                            <label for="query">Search Query</label>
+                            <input type="text" name="query" id="query" class="form-control" value="{{ query }}" required>
+                        </div>
+                        <div class="form-group me-3 mb-2">
+                            <label for="type">Search In</label>
+                            <select name="type" id="type" class="form-select">
+                                <option value="all" {% if search_type == 'all' %}selected{% endif %}>All</option>
+                                <option value="users" {% if search_type == 'users' %}selected{% endif %}>Users</option>
+                                <option value="subjects" {% if search_type == 'subjects' %}selected{% endif %}>Subjects</option>
+                                <option value="chapters" {% if search_type == 'chapters' %}selected{% endif %}>Chapters</option>
+                                <option value="quizzes" {% if search_type == 'quizzes' %}selected{% endif %}>Quizzes</option>
+                                <option value="questions" {% if search_type == 'questions' %}selected{% endif %}>Questions</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if search_type in ['all', 'users'] and users %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Users ({{ users|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Qualification</th>
+                                    <th>Joined Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ user.full_name }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.qualification or 'N/A' }}</td>
+                                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.user_edit', id=user.id) if 'user_edit' in admin.__dict__ else '#' }}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if search_type in ['all', 'subjects'] and subjects %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Subjects ({{ subjects|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Chapters</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for subject in subjects %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ subject.name }}</td>
+                                    <td>{{ subject.description[:50] }}{% if subject.description|length > 50 %}...{% endif %}</td>
+                                    <td>{{ subject.chapters|length }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.subject_edit', id=subject.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a>
+                                        <a href="{{ url_for('admin.chapter_list') }}" class="btn btn-sm btn-info">
+                                            <i class="bi bi-list"></i> Chapters
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if search_type in ['all', 'chapters'] and chapters %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Chapters ({{ chapters|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Subject</th>
+                                    <th>Description</th>
+                                    <th>Quizzes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for chapter in chapters %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ chapter.name }}</td>
+                                    <td>{{ chapter.subject.name }}</td>
+                                    <td>{{ chapter.description[:50] }}{% if chapter.description|length > 50 %}...{% endif %}</td>
+                                    <td>{{ chapter.quizzes|length }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.chapter_edit', id=chapter.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a>
+                                        <a href="{{ url_for('admin.quiz_list') }}" class="btn btn-sm btn-info">
+                                            <i class="bi bi-list"></i> Quizzes
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if search_type in ['all', 'quizzes'] and quizzes %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">Quizzes ({{ quizzes|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Title</th>
+                                    <th>Chapter</th>
+                                    <th>Subject</th>
+                                    <th>Questions</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quiz in quizzes %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ quiz.title }}</td>
+                                    <td>{{ quiz.chapter.name }}</td>
+                                    <td>{{ quiz.chapter.subject.name }}</td>
+                                    <td>{{ quiz.questions|length }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.quiz_edit', id=quiz.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a>
+                                        <a href="{{ url_for('admin.question_list', quiz_id=quiz.id) }}" class="btn btn-sm btn-info">
+                                            <i class="bi bi-list"></i> Questions
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if search_type in ['all', 'questions'] and questions %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Questions ({{ questions|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Question</th>
+                                    <th>Quiz</th>
+                                    <th>Correct Option</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for question in questions %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ question.question_statement[:50] }}{% if question.question_statement|length > 50 %}...{% endif %}</td>
+                                    <td>{{ question.quiz.title }}</td>
+                                    <td>Option {{ question.correct_option }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.question_edit', id=question.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#questionModal{{ question.id }}">
+                                            <i class="bi bi-eye"></i> View
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <div class="modal fade" id="questionModal{{ question.id }}" tabindex="-1" aria-labelledby="questionModalLabel{{ question.id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="questionModalLabel{{ question.id }}">Question Details</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p><strong>Quiz:</strong> {{ question.quiz.title }}</p>
+                                                <p><strong>Question:</strong> {{ question.question_statement }}</p>
+                                                <table class="table table-bordered">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Option</th>
+                                                            <th>Text</th>
+                                                            <th>Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>Option 1</td>
+                                                            <td>{{ question.option1 }}</td>
+                                                            <td>{% if question.correct_option == 1 %}<span class="badge bg-success">Correct</span>{% endif %}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Option 2</td>
+                                                            <td>{{ question.option2 }}</td>
+                                                            <td>{% if question.correct_option == 2 %}<span class="badge bg-success">Correct</span>{% endif %}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Option 3</td>
+                                                            <td>{{ question.option3 }}</td>
+                                                            <td>{% if question.correct_option == 3 %}<span class="badge bg-success">Correct</span>{% endif %}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Option 4</td>
+                                                            <td>{{ question.option4 }}</td>
+                                                            <td>{% if question.correct_option == 4 %}<span class="badge bg-success">Correct</span>{% endif %}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                <a href="{{ url_for('admin.question_edit', id=question.id) }}" class="btn btn-primary">
+                                                    <i class="bi bi-pencil"></i> Edit
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if query and not users and not subjects and not chapters and not quizzes and not questions %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> No results found for your search query.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-12">
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 
