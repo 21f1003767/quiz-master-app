@@ -33,9 +33,7 @@ class RegistrationForm(FlaskForm):
     ])
     password = PasswordField('Password', validators=[
         DataRequired(message="Password is required"),
-        Length(min=6, message="Password must be at least 6 characters long"),
-        Regexp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$', 
-               message="Password must contain at least one letter and one number")
+        Length(min=6, message="Password must be at least 6 characters long")
     ])
     confirm_password = PasswordField('Confirm Password', validators=[
         DataRequired(message="Please confirm your password"),
@@ -43,8 +41,7 @@ class RegistrationForm(FlaskForm):
     ])
     full_name = StringField('Full Name', validators=[
         DataRequired(message="Full name is required"),
-        Length(min=2, max=100, message="Full name must be between 2 and 100 characters"),
-        Regexp(r'^[A-Za-z\s]+$', message="Full name should contain only letters and spaces")
+        Length(min=2, max=100, message="Full name must be between 2 and 100 characters")
     ])
     qualification = StringField('Qualification', validators=[
         DataRequired(message="Qualification is required"),

@@ -312,7 +312,26 @@ def register():
     
     csrf_token = generate_csrf_token()
     
+    # Helper function to handle date format conversion
+    def parse_date(date_str):
+        # Try various date formats
+        formats = ['%Y-%m-%d', '%d-%m-%Y', '%m/%d/%Y', '%d/%m/%Y']
+        for fmt in formats:
+            try:
+                return datetime.strptime(date_str, fmt).date()
+            except ValueError:
+                continue
+        return None
+    
     if request.method == 'POST':
+        # Handle date format conversion for form input
+        if request.form.get('dob'):
+            dob_str = request.form.get('dob')
+            parsed_date = parse_date(dob_str)
+            if parsed_date:
+                # Manually assign the parsed date to the form field
+                form.dob.data = parsed_date
+        
         if is_json_requested():
             data = request.get_json()
             username = data.get('username', '')
@@ -328,7 +347,14 @@ def register():
                 qualification = form.qualification.data
                 dob = form.dob.data
             else:
-                flash('Please check your input and try again.', 'danger')
+                # Add detailed error logging
+                error_messages = []
+                for field, errors in form.errors.items():
+                    error_messages.append(f"{field}: {', '.join(errors)}")
+                
+                error_str = " | ".join(error_messages)
+                print(f"Form validation errors: {error_str}")
+                flash(f'Please check your input and try again. Errors: {error_str}', 'danger')
                 return render_template('auth/register.html', form=form, csrf_token=csrf_token)
         
         existing_user = User.query.filter_by(username=username).first()
