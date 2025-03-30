@@ -48,7 +48,6 @@
 
 {% block scripts %}
 <script>
-    
     const pathParts = window.location.pathname.split('/');
     const subjectId = pathParts[pathParts.indexOf('subjects') + 1];
     
@@ -94,7 +93,7 @@
     
     function updateChaptersList(chaptersData) {
         const container = document.getElementById('chapters-container');
-        container.innerHTML = '';
+        container.innerHTML = ''; 
         
         if (chaptersData.chapters.length === 0) {
             container.innerHTML = `

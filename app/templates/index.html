@@ -3,22 +3,24 @@
 {% block title %}Home - Quiz Master{% endblock %}
 
 {% block content %}
-<div class="jumbotron">
-    <h1 class="display-4">Welcome to Quiz Master!</h1>
-    <p class="lead">An exam preparation platform for multiple courses</p>
-    <hr class="my-4">
-    <p>Register as a user to attempt quizzes, or login as an admin to manage subjects, chapters, and quizzes.</p>
-    <div class="mt-4">
-        {% if 'user_id' not in session and 'admin_id' not in session %}
-            <a href="{{ url_for('auth.register') }}" class="btn btn-primary me-2">Register</a>
-            <a href="{{ url_for('auth.login') }}" class="btn btn-success me-2">User Login</a>
-            <a href="{{ url_for('auth.admin_login') }}" class="btn btn-danger">Admin Login</a>
-        {% elif 'user_id' in session %}
-            <a href="{{ url_for('user.dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
-        {% elif 'admin_id' in session %}
-            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-danger">Go to Admin Dashboard</a>
-        {% endif %}
+<div class="d-flex flex-column justify-content-center align-items-center text-center min-vh-75">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="display-4 mb-4">Welcome to Quiz Master!</h1>
+        <p class="lead mb-4">An exam preparation platform for multiple courses</p>
+        <hr class="my-4">
+        <p class="mb-5">Register as a user to attempt quizzes, or login as an admin to manage subjects, chapters, and quizzes.</p>
+        
+        <div class="d-flex flex-column gap-3 mt-5">
+            {% if 'user_id' not in session and 'admin_id' not in session %}
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Register</a>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-success btn-lg">User Login</a>
+                <a href="{{ url_for('auth.admin_login') }}" class="btn btn-danger btn-lg">Admin Login</a>
+            {% elif 'user_id' in session %}
+                <a href="{{ url_for('user.dashboard') }}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+            {% elif 'admin_id' in session %}
+                <a href="{{ url_for('admin.dashboard') }}" class="btn btn-danger btn-lg">Go to Admin Dashboard</a>
+            {% endif %}
+        </div>
     </div>
 </div>
-
 {% endblock %} 

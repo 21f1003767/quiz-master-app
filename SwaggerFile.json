@@ -44,6 +44,34 @@
       },
       "type": "object"
     },
+    "Score": {
+      "properties": {
+        "date": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "percentage": {
+          "format": "float",
+          "type": "number"
+        },
+        "quiz_title": {
+          "type": "string"
+        },
+        "subject_name": {
+          "type": "string"
+        },
+        "total_questions": {
+          "type": "integer"
+        },
+        "total_scored": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "Subject": {
       "properties": {
         "description": {
@@ -461,89 +489,84 @@
     },
     "/admin/login": {
       "get": {
-        "consumes": [
-          "application/x-www-form-urlencoded",
-          "application/json"
-        ],
-        "description": "Authenticate and login as an admin",
+        "description": "Authenticates an admin with username and password",
         "parameters": [
           {
-            "description": "Admin username",
             "in": "formData",
             "name": "username",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
-            "description": "Admin password",
             "in": "formData",
             "name": "password",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "admin": {
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "username": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "message": {
-                      "type": "string"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
             "description": "Login successful"
           },
-          "400": {
-            "description": "Invalid input"
-          },
           "401": {
-            "description": "Login failed"
+            "description": "Invalid credentials"
           }
         },
-        "summary": "Admin Login",
+        "summary": "Admin Login API",
         "tags": [
-          "auth"
+          "Authentication"
         ]
       },
       "post": {
-        "consumes": [
-          "application/x-www-form-urlencoded",
-          "application/json"
-        ],
-        "description": "Authenticate and login as an admin",
+        "description": "Authenticates an admin with username and password",
         "parameters": [
           {
-            "description": "Admin username",
             "in": "formData",
             "name": "username",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
-            "description": "Admin password",
             "in": "formData",
             "name": "password",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login successful"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        },
+        "summary": "Admin Login API",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/admin/questions/delete/{id}": {
+      "delete": {
+        "description": "Permanently delete a question from a quiz",
+        "parameters": [
+          {
+            "description": "ID of the question to delete",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -552,17 +575,6 @@
               "application/json": {
                 "schema": {
                   "properties": {
-                    "admin": {
-                      "properties": {
-                        "id": {
-                          "type": "integer"
-                        },
-                        "username": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
                     "message": {
                       "type": "string"
                     },
@@ -574,78 +586,257 @@
                 }
               }
             },
-            "description": "Login successful"
+            "description": "Question deleted successfully"
           },
-          "400": {
-            "description": "Invalid input"
-          },
-          "401": {
-            "description": "Login failed"
+          "404": {
+            "description": "Question not found"
           }
         },
-        "summary": "Admin Login",
+        "summary": "Delete Question",
         "tags": [
-          "auth"
+          "admin"
+        ]
+      },
+      "post": {
+        "description": "Permanently delete a question from a quiz",
+        "parameters": [
+          {
+            "description": "ID of the question to delete",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Question deleted successfully"
+          },
+          "404": {
+            "description": "Question not found"
+          }
+        },
+        "summary": "Delete Question",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/questions/edit/{id}": {
+      "get": {
+        "description": "Update an existing question's details",
+        "parameters": [
+          {
+            "description": "ID of the question to edit",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "correct_option": {
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "option1": {
+                    "type": "string"
+                  },
+                  "option2": {
+                    "type": "string"
+                  },
+                  "option3": {
+                    "type": "string"
+                  },
+                  "option4": {
+                    "type": "string"
+                  },
+                  "question_statement": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "question": {
+                      "properties": {
+                        "correct_option": {
+                          "type": "integer"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "options": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "question_statement": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Question updated successfully"
+          },
+          "400": {
+            "description": "Invalid input data"
+          },
+          "404": {
+            "description": "Question not found"
+          }
+        },
+        "summary": "Edit Question",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "description": "Update an existing question's details",
+        "parameters": [
+          {
+            "description": "ID of the question to edit",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "correct_option": {
+                    "maximum": 4,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "option1": {
+                    "type": "string"
+                  },
+                  "option2": {
+                    "type": "string"
+                  },
+                  "option3": {
+                    "type": "string"
+                  },
+                  "option4": {
+                    "type": "string"
+                  },
+                  "question_statement": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "question": {
+                      "properties": {
+                        "correct_option": {
+                          "type": "integer"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "options": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "question_statement": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Question updated successfully"
+          },
+          "400": {
+            "description": "Invalid input data"
+          },
+          "404": {
+            "description": "Question not found"
+          }
+        },
+        "summary": "Edit Question",
+        "tags": [
+          "admin"
         ]
       }
     },
     "/admin/quizzes": {
       "get": {
-        "description": "Returns a list of all quizzes",
+        "description": "View and manage all quizzes in one interface",
         "responses": {
           "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "count": {
-                      "type": "integer"
-                    },
-                    "quizzes": {
-                      "items": {
-                        "properties": {
-                          "chapter_id": {
-                            "type": "integer"
-                          },
-                          "chapter_name": {
-                            "type": "string"
-                          },
-                          "date_of_quiz": {
-                            "format": "date",
-                            "type": "string"
-                          },
-                          "description": {
-                            "type": "string"
-                          },
-                          "id": {
-                            "type": "integer"
-                          },
-                          "subject_name": {
-                            "type": "string"
-                          },
-                          "time_duration": {
-                            "type": "string"
-                          },
-                          "title": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful operation"
-          },
-          "401": {
-            "description": "Not authenticated as admin"
+            "description": "Quiz management page"
           }
         },
         "security": [
@@ -653,7 +844,7 @@
             "session": []
           }
         ],
-        "summary": "List Quizzes",
+        "summary": "Manage Quizzes",
         "tags": [
           "admin"
         ]
@@ -896,6 +1087,272 @@
           }
         ],
         "summary": "Create Quiz",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/quizzes/delete/{id}": {
+      "delete": {
+        "description": "Permanently delete a quiz and all associated questions",
+        "parameters": [
+          {
+            "description": "ID of the quiz to delete",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Quiz deleted successfully"
+          },
+          "404": {
+            "description": "Quiz not found"
+          }
+        },
+        "summary": "Delete Quiz",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "description": "Permanently delete a quiz and all associated questions",
+        "parameters": [
+          {
+            "description": "ID of the quiz to delete",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Quiz deleted successfully"
+          },
+          "404": {
+            "description": "Quiz not found"
+          }
+        },
+        "summary": "Delete Quiz",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/quizzes/edit/{id}": {
+      "get": {
+        "description": "Update a quiz with new information",
+        "parameters": [
+          {
+            "description": "ID of the quiz to edit",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "chapter_id": {
+                    "type": "integer"
+                  },
+                  "date_of_quiz": {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  "remarks": {
+                    "type": "string"
+                  },
+                  "time_duration": {
+                    "format": "time",
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "quiz": {
+                      "properties": {
+                        "chapter_id": {
+                          "type": "integer"
+                        },
+                        "date_of_quiz": {
+                          "format": "date",
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Quiz updated successfully"
+          },
+          "400": {
+            "description": "Invalid input data"
+          },
+          "404": {
+            "description": "Quiz not found"
+          }
+        },
+        "summary": "Edit Quiz",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "description": "Update a quiz with new information",
+        "parameters": [
+          {
+            "description": "ID of the quiz to edit",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "chapter_id": {
+                    "type": "integer"
+                  },
+                  "date_of_quiz": {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  "remarks": {
+                    "type": "string"
+                  },
+                  "time_duration": {
+                    "format": "time",
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "quiz": {
+                      "properties": {
+                        "chapter_id": {
+                          "type": "integer"
+                        },
+                        "date_of_quiz": {
+                          "format": "date",
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Quiz updated successfully"
+          },
+          "400": {
+            "description": "Invalid input data"
+          },
+          "404": {
+            "description": "Quiz not found"
+          }
+        },
+        "summary": "Edit Quiz",
         "tags": [
           "admin"
         ]
@@ -1357,17 +1814,67 @@
         ]
       }
     },
-    "/admin/subjects": {
+    "/admin/search": {
       "get": {
-        "description": "Returns a list of all subjects",
+        "description": "Search for subjects, chapters, quizzes, questions, and users",
+        "parameters": [
+          {
+            "description": "Search query",
+            "in": "query",
+            "name": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Type of content to search",
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "all",
+                "subjects",
+                "chapters",
+                "quizzes",
+                "questions",
+                "users"
+              ],
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
                   "properties": {
-                    "count": {
-                      "type": "integer"
+                    "chapters": {
+                      "items": {
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "query": {
+                      "type": "string"
+                    },
+                    "questions": {
+                      "items": {
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "quizzes": {
+                      "items": {
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "search_type": {
+                      "type": "string"
                     },
                     "subjects": {
                       "items": {
@@ -1388,16 +1895,48 @@
                     },
                     "success": {
                       "type": "boolean"
+                    },
+                    "users": {
+                      "items": {
+                        "properties": {
+                          "created_at": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "full_name": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "username": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
                     }
                   },
                   "type": "object"
                 }
               }
             },
-            "description": "Successful operation"
-          },
-          "401": {
-            "description": "Not authenticated as admin"
+            "description": "Search results"
+          }
+        },
+        "summary": "Admin Search API",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/subjects": {
+      "get": {
+        "description": "View and manage all subjects in one interface",
+        "responses": {
+          "200": {
+            "description": "Subject management page"
           }
         },
         "security": [
@@ -1405,7 +1944,19 @@
             "session": []
           }
         ],
-        "summary": "List Subjects",
+        "summary": "Manage Subjects",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "description": "View and manage all subjects in one interface",
+        "responses": {
+          "200": {
+            "description": "Subject management page"
+          }
+        },
+        "summary": "Manage Subjects",
         "tags": [
           "admin"
         ]
@@ -1973,41 +2524,39 @@
         ]
       }
     },
-    "/api": {
+    "/admin/users": {
       "get": {
-        "description": "Get information about the API endpoints and documentation",
+        "description": "View and manage all users in one interface",
         "responses": {
           "200": {
-            "description": "Successful operation"
+            "description": "User management page"
           }
         },
-        "summary": "API Information",
+        "summary": "Manage Users",
         "tags": [
-          "api"
+          "admin"
         ]
       }
     },
     "/login": {
       "get": {
-        "consumes": [
-          "application/x-www-form-urlencoded",
-          "application/json"
-        ],
-        "description": "Authenticate and login a user",
+        "description": "Authenticates a user with username and password",
         "parameters": [
           {
-            "description": "User email",
             "in": "formData",
-            "name": "email",
+            "name": "username",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
-            "description": "User password",
             "in": "formData",
             "name": "password",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2017,23 +2566,19 @@
                 "schema": {
                   "properties": {
                     "message": {
+                      "example": "Login successful",
                       "type": "string"
                     },
                     "success": {
+                      "example": true,
                       "type": "boolean"
                     },
                     "user": {
                       "properties": {
-                        "email": {
+                        "full_name": {
                           "type": "string"
                         },
-                        "id": {
-                          "type": "integer"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "role": {
+                        "username": {
                           "type": "string"
                         }
                       },
@@ -2046,38 +2591,33 @@
             },
             "description": "Login successful"
           },
-          "400": {
-            "description": "Invalid input"
-          },
           "401": {
-            "description": "Login failed"
+            "description": "Invalid credentials"
           }
         },
-        "summary": "User Login",
+        "summary": "User Login API",
         "tags": [
-          "auth"
+          "Authentication"
         ]
       },
       "post": {
-        "consumes": [
-          "application/x-www-form-urlencoded",
-          "application/json"
-        ],
-        "description": "Authenticate and login a user",
+        "description": "Authenticates a user with username and password",
         "parameters": [
           {
-            "description": "User email",
             "in": "formData",
-            "name": "email",
+            "name": "username",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
-            "description": "User password",
             "in": "formData",
             "name": "password",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2087,23 +2627,19 @@
                 "schema": {
                   "properties": {
                     "message": {
+                      "example": "Login successful",
                       "type": "string"
                     },
                     "success": {
+                      "example": true,
                       "type": "boolean"
                     },
                     "user": {
                       "properties": {
-                        "email": {
+                        "full_name": {
                           "type": "string"
                         },
-                        "id": {
-                          "type": "integer"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "role": {
+                        "username": {
                           "type": "string"
                         }
                       },
@@ -2116,16 +2652,13 @@
             },
             "description": "Login successful"
           },
-          "400": {
-            "description": "Invalid input"
-          },
           "401": {
-            "description": "Login failed"
+            "description": "Invalid credentials"
           }
         },
-        "summary": "User Login",
+        "summary": "User Login API",
         "tags": [
-          "auth"
+          "Authentication"
         ]
       }
     },
@@ -2145,134 +2678,145 @@
     },
     "/register": {
       "get": {
-        "consumes": [
-          "application/x-www-form-urlencoded",
-          "application/json"
-        ],
-        "description": "Register a new user account",
+        "description": "Creates a new user account",
         "parameters": [
           {
-            "description": "User full name",
             "in": "formData",
-            "name": "name",
+            "name": "username",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
-            "description": "User email",
-            "in": "formData",
-            "name": "email",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "description": "User password",
             "in": "formData",
             "name": "password",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
-            "description": "Password confirmation",
             "in": "formData",
-            "name": "confirm_password",
+            "name": "full_name",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "formData",
+            "name": "qualification",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "formData",
+            "name": "dob",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    },
-                    "user": {
-                      "properties": {
-                        "email": {
-                          "type": "string"
-                        },
-                        "id": {
-                          "type": "integer"
-                        },
-                        "name": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
             "description": "Registration successful"
           },
           "400": {
             "description": "Invalid input or user already exists"
           }
         },
-        "summary": "User Registration",
+        "summary": "User Registration API",
         "tags": [
-          "auth"
+          "Authentication"
         ]
       },
       "post": {
-        "consumes": [
-          "application/x-www-form-urlencoded",
-          "application/json"
-        ],
-        "description": "Register a new user account",
+        "description": "Creates a new user account",
         "parameters": [
           {
-            "description": "User full name",
             "in": "formData",
-            "name": "name",
+            "name": "username",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
-            "description": "User email",
-            "in": "formData",
-            "name": "email",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "description": "User password",
             "in": "formData",
             "name": "password",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
-            "description": "Password confirmation",
             "in": "formData",
-            "name": "confirm_password",
+            "name": "full_name",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "formData",
+            "name": "qualification",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "formData",
+            "name": "dob",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "201": {
+            "description": "Registration successful"
+          },
+          "400": {
+            "description": "Invalid input or user already exists"
+          }
+        },
+        "summary": "User Registration API",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/user/chapters/{chapter_id}": {
+      "get": {
+        "description": "Returns details for a specific chapter",
+        "parameters": [
+          {
+            "description": "ID of the chapter",
+            "in": "path",
+            "name": "chapter_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
             "content": {
               "application/json": {
                 "schema": {
                   "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "success": {
-                      "type": "boolean"
-                    },
-                    "user": {
+                    "chapter": {
                       "properties": {
-                        "email": {
+                        "description": {
                           "type": "string"
                         },
                         "id": {
@@ -2280,24 +2824,30 @@
                         },
                         "name": {
                           "type": "string"
+                        },
+                        "subject_id": {
+                          "type": "integer"
                         }
                       },
                       "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
                     }
                   },
                   "type": "object"
                 }
               }
             },
-            "description": "Registration successful"
+            "description": "Successful operation"
           },
-          "400": {
-            "description": "Invalid input or user already exists"
+          "404": {
+            "description": "Chapter not found"
           }
         },
-        "summary": "User Registration",
+        "summary": "Chapter Detail",
         "tags": [
-          "auth"
+          "user"
         ]
       }
     },
@@ -2423,7 +2973,7 @@
     },
     "/user/dashboard": {
       "get": {
-        "description": "Returns user information, recent subjects, and recent scores",
+        "description": "Returns the dashboard view with user's data, recent scores, and subject recommendations",
         "responses": {
           "200": {
             "content": {
@@ -2433,57 +2983,33 @@
                     "recent_scores": {
                       "items": {
                         "properties": {
-                          "attempt_date": {
+                          "date": {
+                            "example": "Mon, 15 May 2023 14:30:00 GMT",
                             "format": "date-time",
                             "type": "string"
                           },
-                          "chapter_name": {
+                          "score": {
+                            "example": 85,
+                            "type": "integer"
+                          },
+                          "subject": {
+                            "example": "Mathematics",
                             "type": "string"
-                          },
-                          "id": {
-                            "type": "integer"
-                          },
-                          "percentage": {
-                            "format": "float",
-                            "type": "number"
-                          },
-                          "quiz_id": {
-                            "type": "integer"
-                          },
-                          "quiz_title": {
-                            "type": "string"
-                          },
-                          "subject_name": {
-                            "type": "string"
-                          },
-                          "total_questions": {
-                            "type": "integer"
-                          },
-                          "total_scored": {
-                            "type": "integer"
                           }
                         },
                         "type": "object"
                       },
                       "type": "array"
                     },
-                    "recent_subjects": {
+                    "recommended_subjects": {
                       "items": {
                         "properties": {
-                          "chapters_count": {
-                            "type": "integer"
-                          },
-                          "created_at": {
-                            "format": "date-time",
-                            "type": "string"
-                          },
-                          "description": {
-                            "type": "string"
-                          },
                           "id": {
+                            "example": 1,
                             "type": "integer"
                           },
                           "name": {
+                            "example": "Physics",
                             "type": "string"
                           }
                         },
@@ -2492,24 +3018,21 @@
                       "type": "array"
                     },
                     "success": {
+                      "example": true,
                       "type": "boolean"
                     },
                     "user": {
                       "properties": {
-                        "dob": {
-                          "format": "date",
-                          "type": "string"
-                        },
                         "full_name": {
+                          "example": "John Doe",
                           "type": "string"
-                        },
-                        "id": {
-                          "type": "integer"
                         },
                         "qualification": {
+                          "example": "Bachelor's Degree",
                           "type": "string"
                         },
                         "username": {
+                          "example": "user@example.com",
                           "type": "string"
                         }
                       },
@@ -2520,10 +3043,140 @@
                 }
               }
             },
-            "description": "Successful operation"
+            "description": "Dashboard data"
           }
         },
-        "summary": "User Dashboard",
+        "summary": "User Dashboard API",
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/user/quiz-history": {
+      "get": {
+        "description": "Returns the history of all quizzes attempted by the user",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "avg_score": {
+                      "format": "float",
+                      "type": "number"
+                    },
+                    "scores": {
+                      "items": {
+                        "$ref": "#/definitions/Score"
+                      },
+                      "type": "array"
+                    },
+                    "subject_performance": {
+                      "additionalProperties": {
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "percentage": {
+                            "format": "float",
+                            "type": "number"
+                          },
+                          "total_correct": {
+                            "type": "integer"
+                          },
+                          "total_questions": {
+                            "type": "integer"
+                          },
+                          "total_quizzes": {
+                            "type": "integer"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "total_correct": {
+                      "type": "integer"
+                    },
+                    "total_questions": {
+                      "type": "integer"
+                    },
+                    "total_quizzes": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Quiz history page with statistics"
+          }
+        },
+        "summary": "Quiz History",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/user/quizzes/{quiz_id}": {
+      "get": {
+        "description": "Returns details for a specific quiz",
+        "parameters": [
+          {
+            "description": "ID of the quiz",
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "quiz": {
+                      "properties": {
+                        "date_of_quiz": {
+                          "format": "date",
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "time_duration": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "404": {
+            "description": "Quiz not found"
+          }
+        },
+        "summary": "Quiz Detail",
         "tags": [
           "user"
         ]
@@ -2602,6 +3255,140 @@
           }
         },
         "summary": "Quiz Questions",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/user/quizzes/{quiz_id}/report": {
+      "get": {
+        "description": "Returns a detailed report for a completed quiz",
+        "parameters": [
+          {
+            "description": "ID of the quiz",
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detailed quiz report"
+          },
+          "404": {
+            "description": "Quiz not found or not attempted"
+          }
+        },
+        "summary": "Quiz Report",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/user/quizzes/{quiz_id}/result": {
+      "get": {
+        "description": "Returns the result of a completed quiz",
+        "parameters": [
+          {
+            "description": "ID of the quiz",
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quiz result page"
+          },
+          "302": {
+            "description": "Redirect to dashboard if no results found"
+          },
+          "404": {
+            "description": "Quiz not found"
+          }
+        },
+        "summary": "Quiz Result",
+        "tags": [
+          "user"
+        ]
+      }
+    },
+    "/user/quizzes/{quiz_id}/start": {
+      "get": {
+        "description": "Prepares a quiz for attempting and returns quiz questions",
+        "parameters": [
+          {
+            "description": "ID of the quiz",
+            "in": "path",
+            "name": "quiz_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "questions": {
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "options": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          },
+                          "question_statement": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "quiz_id": {
+                      "type": "integer"
+                    },
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "time_duration": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "total_seconds": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful operation"
+          },
+          "403": {
+            "description": "Quiz already attempted or not available"
+          },
+          "404": {
+            "description": "Quiz not found or has no questions"
+          }
+        },
+        "summary": "Start Quiz",
         "tags": [
           "user"
         ]
@@ -2719,40 +3506,34 @@
               "application/json": {
                 "schema": {
                   "properties": {
-                    "count": {
-                      "type": "integer"
-                    },
                     "scores": {
                       "items": {
                         "properties": {
-                          "attempt_date": {
+                          "date": {
+                            "example": "Tue, 20 Jun 2023 10:15:00 GMT",
                             "format": "date-time",
                             "type": "string"
                           },
-                          "chapter_name": {
-                            "type": "string"
-                          },
                           "id": {
+                            "example": 1,
+                            "type": "integer"
+                          },
+                          "max_score": {
+                            "example": 100,
                             "type": "integer"
                           },
                           "percentage": {
+                            "example": 92.0,
                             "format": "float",
                             "type": "number"
                           },
-                          "quiz_id": {
+                          "score": {
+                            "example": 92,
                             "type": "integer"
                           },
-                          "quiz_title": {
+                          "subject": {
+                            "example": "Chemistry",
                             "type": "string"
-                          },
-                          "subject_name": {
-                            "type": "string"
-                          },
-                          "total_questions": {
-                            "type": "integer"
-                          },
-                          "total_scored": {
-                            "type": "integer"
                           }
                         },
                         "type": "object"
@@ -2760,6 +3541,7 @@
                       "type": "array"
                     },
                     "success": {
+                      "example": true,
                       "type": "boolean"
                     }
                   },
@@ -2767,18 +3549,18 @@
                 }
               }
             },
-            "description": "Successful operation"
+            "description": "User's scores"
           }
         },
-        "summary": "User Scores",
+        "summary": "User Scores API",
         "tags": [
-          "user"
+          "Scores"
         ]
       }
     },
     "/user/search": {
       "get": {
-        "description": "Performs a search across subjects, chapters, and quizzes",
+        "description": "Returns search results based on query and type",
         "parameters": [
           {
             "description": "Search query",
@@ -2837,6 +3619,7 @@
                       "type": "array"
                     },
                     "success": {
+                      "example": true,
                       "type": "boolean"
                     }
                   },
@@ -2844,18 +3627,18 @@
                 }
               }
             },
-            "description": "Successful operation"
+            "description": "Search results"
           }
         },
-        "summary": "Search",
+        "summary": "Search API",
         "tags": [
-          "user"
+          "Search"
         ]
       }
     },
     "/user/subjects": {
       "get": {
-        "description": "Returns a list of all available subjects",
+        "description": "Returns a list of all subjects available for quizzes",
         "responses": {
           "200": {
             "content": {
@@ -2863,31 +3646,80 @@
                 "schema": {
                   "properties": {
                     "count": {
+                      "example": 10,
                       "type": "integer"
                     },
                     "subjects": {
                       "items": {
                         "properties": {
-                          "chapters_count": {
-                            "type": "integer"
-                          },
-                          "created_at": {
-                            "format": "date-time",
-                            "type": "string"
-                          },
                           "description": {
+                            "example": "Basic mathematical concepts and problem-solving",
                             "type": "string"
                           },
                           "id": {
+                            "example": 1,
                             "type": "integer"
                           },
                           "name": {
+                            "example": "Mathematics",
                             "type": "string"
                           }
                         },
                         "type": "object"
                       },
                       "type": "array"
+                    },
+                    "success": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "List of subjects"
+          }
+        },
+        "summary": "List Available Subjects API",
+        "tags": [
+          "Subjects"
+        ]
+      }
+    },
+    "/user/subjects/{subject_id}": {
+      "get": {
+        "description": "Returns details for a specific subject",
+        "parameters": [
+          {
+            "description": "ID of the subject",
+            "in": "path",
+            "name": "subject_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "subject": {
+                      "properties": {
+                        "description": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     },
                     "success": {
                       "type": "boolean"
@@ -2898,9 +3730,12 @@
               }
             },
             "description": "Successful operation"
+          },
+          "404": {
+            "description": "Subject not found"
           }
         },
-        "summary": "Subjects List",
+        "summary": "Subject Detail",
         "tags": [
           "user"
         ]
