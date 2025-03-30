@@ -66,3 +66,9 @@ class QuestionForm(FlaskForm):
                                coerce=int, 
                                validators=[DataRequired()])
     submit = SubmitField('Submit') 
+
+class UserForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired(), Length(min=3, max=50)])
+    full_name = StringField('Full Name', validators=[DataRequired(), Length(max=100)])
+    qualification = StringField('Qualification', validators=[Length(max=100)])
+    submit = SubmitField('Submit')

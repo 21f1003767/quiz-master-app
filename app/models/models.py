@@ -13,7 +13,6 @@ class User(db.Model):
     dob = db.Column(db.Date)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationship with scores
     scores = db.relationship('Score', backref='user', lazy=True)
     
     def set_password(self, password):
@@ -39,7 +38,6 @@ class Subject(db.Model):
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationship with chapters
     chapters = db.relationship('Chapter', backref='subject', lazy=True, cascade="all, delete-orphan")
     
     def __repr__(self):
@@ -52,7 +50,6 @@ class Chapter(db.Model):
     subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationship with quizzes
     quizzes = db.relationship('Quiz', backref='chapter', lazy=True, cascade="all, delete-orphan")
     
     def __repr__(self):
@@ -67,7 +64,6 @@ class Quiz(db.Model):
     remarks = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationships
     questions = db.relationship('Question', backref='quiz', lazy=True, cascade="all, delete-orphan")
     scores = db.relationship('Score', backref='quiz', lazy=True, cascade="all, delete-orphan")
     

@@ -1,26 +1,21 @@
 from flask import Blueprint, render_template, redirect, url_for, session, flash, request
 from app.models.models import Admin, User, Subject, Chapter, Quiz, Question, db
 from app.routes.auth import admin_required
-from app.forms import SubjectForm, ChapterForm, QuizForm, QuestionForm
+from app.forms import SubjectForm, ChapterForm, QuizForm, QuestionForm, UserForm
 
 admin = Blueprint('admin', __name__)
 
 @admin.route('/dashboard')
 @admin_required
 def dashboard():
-    # Count total users
     user_count = User.query.count()
     
-    # Count total subjects
     subject_count = Subject.query.count()
     
-    # Count total chapters
     chapter_count = Chapter.query.count()
     
-    # Count total quizzes
     quiz_count = Quiz.query.count()
     
-    # Get recent subjects
     recent_subjects = Subject.query.order_by(Subject.created_at.desc()).limit(5).all()
     
     return render_template('admin/dashboard.html',
@@ -31,7 +26,6 @@ def dashboard():
                            quiz_count=quiz_count,
                            recent_subjects=recent_subjects)
 
-# ---------- Subject Management ---------- #
 @admin.route('/subjects')
 @admin_required
 def subject_list():
@@ -83,7 +77,6 @@ def subject_delete(id):
     flash('Subject deleted successfully!', 'success')
     return redirect(url_for('admin.subject_list'))
 
-# ---------- Chapter Management ---------- #
 @admin.route('/chapters')
 @admin_required
 def chapter_list():
@@ -96,7 +89,6 @@ def chapter_list():
 @admin_required
 def chapter_create():
     form = ChapterForm()
-    # Get subjects for the dropdown
     form.subject_id.choices = [(s.id, s.name) for s in Subject.query.all()]
     
     if form.validate_on_submit():
@@ -119,7 +111,6 @@ def chapter_create():
 def chapter_edit(id):
     chapter = Chapter.query.get_or_404(id)
     form = ChapterForm(obj=chapter)
-    # Get subjects for the dropdown
     form.subject_id.choices = [(s.id, s.name) for s in Subject.query.all()]
     
     if form.validate_on_submit():
@@ -143,7 +134,6 @@ def chapter_delete(id):
     flash('Chapter deleted successfully!', 'success')
     return redirect(url_for('admin.chapter_list'))
 
-# ---------- Quiz Management ---------- #
 @admin.route('/quizzes')
 @admin_required
 def quiz_list():
@@ -156,7 +146,6 @@ def quiz_list():
 @admin_required
 def quiz_create():
     form = QuizForm()
-    # Get chapters for the dropdown
     form.chapter_id.choices = [(c.id, f"{c.name} ({c.subject.name})") for c in Chapter.query.all()]
     
     if form.validate_on_submit():
@@ -181,7 +170,6 @@ def quiz_create():
 def quiz_edit(id):
     quiz = Quiz.query.get_or_404(id)
     form = QuizForm(obj=quiz)
-    # Get chapters for the dropdown
     form.chapter_id.choices = [(c.id, f"{c.name} ({c.subject.name})") for c in Chapter.query.all()]
     
     if form.validate_on_submit():
@@ -207,7 +195,6 @@ def quiz_delete(id):
     flash('Quiz deleted successfully!', 'success')
     return redirect(url_for('admin.quiz_list'))
 
-# ---------- Question Management ---------- #
 @admin.route('/quizzes/<int:quiz_id>/questions')
 @admin_required
 def question_list(quiz_id):
@@ -277,7 +264,6 @@ def question_delete(id):
     flash('Question deleted successfully!', 'success')
     return redirect(url_for('admin.question_list', quiz_id=quiz_id))
 
-# ---------- User Management ---------- #
 @admin.route('/users')
 @admin_required
 def user_list():
@@ -351,3 +337,22 @@ def search():
                            chapters=chapters,
                            quizzes=quizzes,
                            questions=questions) 
+
+@admin.route('/users/edit/<int:id>', methods=['GET', 'POST'])
+@admin_required
+def user_edit(id):
+    user = User.query.get_or_404(id)
+    form = UserForm(obj=user)
+    
+    if form.validate_on_submit():
+        user.username = form.username.data
+        user.full_name = form.full_name.data
+        user.qualification = form.qualification.data
+        db.session.commit()
+        flash('User updated successfully!', 'success')
+        return redirect(url_for('admin.user_list'))
+    
+    return render_template('admin/users/form.html', 
+                           title='Edit User',
+                           form=form,
+                           action='Edit')

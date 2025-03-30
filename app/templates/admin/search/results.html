@@ -11,7 +11,6 @@
         </div>
     </div>
 
-    <!-- Search Form -->
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="card">
@@ -72,7 +71,7 @@
                                     <td>{{ user.qualification or 'N/A' }}</td>
                                     <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
                                     <td>
-                                        <a href="{{ url_for('admin.user_edit', id=user.id) if 'user_edit' in admin.__dict__ else '#' }}" class="btn btn-sm btn-primary">
+                                        <a href="{{ url_for('admin.user_edit', id=user.id) }}" class="btn btn-sm btn-primary">
                                             <i class="bi bi-pencil"></i> Edit
                                         </a>
                                     </td>
