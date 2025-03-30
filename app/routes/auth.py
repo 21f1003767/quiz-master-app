@@ -1,17 +1,30 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, session, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, session, request, jsonify, abort
 from app.forms import LoginForm, RegistrationForm, AdminLoginForm
 from app.models.models import User, Admin, db
 from functools import wraps
-import bcrypt
+from werkzeug.security import check_password_hash, generate_password_hash
 from app.utils import is_json_requested
+from datetime import datetime, timedelta
+import re
+import uuid
+import secrets
 
 auth = Blueprint('auth', __name__)
 
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        if 'user_id' not in session and 'admin_id' not in session:
+            flash('Please log in to access this page', 'warning')
+            return redirect(url_for('auth.login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def user_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            flash('Please login to access this page', 'warning')
+            flash('User access required', 'warning')
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -25,33 +38,53 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+def csrf_protected(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        
+        if request.is_json and 'Authorization' in request.headers:
+            return f(*args, **kwargs)
+            
+        
+        if request.method == 'POST' and not request.is_json:
+            csrf_token = request.form.get('csrf_token')
+            if not csrf_token or csrf_token != session.get('_csrf_token'):
+                flash('CSRF token validation failed. Please try again.', 'danger')
+                return redirect(url_for('auth.login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @auth.route('/')
 def index():
     return render_template('index.html')
 
-@auth.route('/login', methods=['POST', 'GET'])
+def generate_csrf_token():
+    """Generate a secure CSRF token and store it in the session"""
+    if '_csrf_token' not in session:
+        session['_csrf_token'] = secrets.token_hex(16)
+    return session['_csrf_token']
+
+@auth.route('/login', methods=['GET', 'POST'])
 def login():
     """
-    User Login
+    User Login API
     ---
     tags:
-      - auth
-    summary: Login user
-    description: Authenticate and login a user
-    consumes:
-      - application/x-www-form-urlencoded
-      - application/json
+      - Authentication
+    summary: Authenticate a user
+    description: Authenticates a user with username and password
     parameters:
-      - name: email
+      - name: username
         in: formData
-        description: User email
         required: true
-        type: string
+        schema:
+          type: string
       - name: password
         in: formData
-        description: User password
         required: true
-        type: string
+        schema:
+          type: string
     responses:
       200:
         description: Login successful
@@ -62,340 +95,285 @@ def login():
               properties:
                 success:
                   type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: Login successful
                 user:
                   type: object
                   properties:
-                    id:
-                      type: integer
-                    name:
+                    username:
                       type: string
-                    email:
+                    full_name:
                       type: string
-                    role:
-                      type: string
-                message:
-                  type: string
-      400:
-        description: Invalid input
       401:
-        description: Login failed
+        description: Invalid credentials
     """
-    if 'user_id' in session:
-        if is_json_requested():
-            user = User.query.get(session['user_id'])
-            return jsonify({
-                'success': True,
-                'message': 'User already logged in',
-                'user': {
-                    'id': user.id,
-                    'name': user.name,
-                    'email': user.email,
-                    'role': user.role
-                }
-            })
-        if session['role'] == 'ADMIN':
-            return redirect(url_for('admin.dashboard'))
-        return redirect(url_for('user.dashboard'))
+    
+    if 'admin_id' in session:
+        session.pop('admin_id', None)
+        session.pop('admin_username', None)
+        session.pop('role', None)
     
     form = LoginForm()
     
-    if request.method == 'POST':
-        if request.is_json:
-            data = request.get_json()
-            email = data.get('email')
-            password = data.get('password')
-            
-        elif form.validate_on_submit():
-            email = form.email.data
-            password = form.password.data
-        else:
-            email = request.form.get('email')
-            password = request.form.get('password')
-            
-        if not email or not password:
-            if is_json_requested():
-                return jsonify({
-                    'success': False,
-                    'message': 'Email and password are required'
-                }), 400
-            flash('Email and password are required', 'danger')
-            return render_template('auth/login.html', form=form, title='Login')
-        
-        user = User.query.filter_by(email=email).first()
-        
-        if user and bcrypt.check_password_hash(user.password, password):
-            session['user_id'] = user.id
-            session['name'] = user.name
-            session['email'] = user.email
-            session['role'] = user.role
-            
-            if is_json_requested():
-                return jsonify({
-                    'success': True,
-                    'message': 'Login successful',
-                    'user': {
-                        'id': user.id,
-                        'name': user.name,
-                        'email': user.email,
-                        'role': user.role
-                    }
-                })
-            
-            if user.role == 'ADMIN':
-                return redirect(url_for('admin.dashboard'))
-            return redirect(url_for('user.dashboard'))
-        else:
-            if is_json_requested():
-                return jsonify({
-                    'success': False,
-                    'message': 'Invalid email or password'
-                }), 401
-            flash('Invalid email or password', 'danger')
     
-    return render_template('auth/login.html', form=form, title='Login')
+    if request.method == 'GET':
+        session.pop('_csrf_token', None)
+    csrf_token = generate_csrf_token()
+    
+    if request.method == 'POST':
+        print("Processing login POST request")  
+        
+        if is_json_requested():
+            data = request.get_json()
+            username = data.get('username', '')
+            password = data.get('password', '')
+        else:
+            username = form.username.data
+            password = form.password.data
+            print(f"Form data received - Username: {username}")
+        
+        user = User.query.filter_by(username=username).first()
+        print(f"User found: {user is not None}")
+        
+        if user:
+            password_correct = False
+            try:
+                password_correct = user.check_password(password)
+                print(f"Password check result: {password_correct}")
+            except Exception as e:
+                print(f"Password check error: {str(e)}")
+                
+            if password_correct:
+                session['user_id'] = user.id
+                session['username'] = user.username
+                session['full_name'] = user.full_name
+                session['role'] = 'USER'
+                
+                if is_json_requested():
+                    return jsonify({
+                        'success': True,
+                        'message': 'Login successful',
+                        'user': {
+                            'username': user.username,
+                            'full_name': user.full_name
+                        }
+                    })
+                
+                flash('Login successful!', 'success')
+                return redirect(url_for('user.dashboard'))
+        
+        if is_json_requested():
+            return jsonify({
+                'success': False,
+                'message': 'Invalid credentials'
+            }), 401
+                
+        flash('Invalid username or password. Please try again.', 'danger')
+    
+    return render_template('auth/login.html', form=form, csrf_token=csrf_token)
 
 @auth.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     """
-    Admin Login
+    Admin Login API
     ---
     tags:
-      - auth
-    summary: Login as admin
-    description: Authenticate and login as an admin
-    consumes:
-      - application/x-www-form-urlencoded
-      - application/json
+      - Authentication
+    summary: Authenticate an admin
+    description: Authenticates an admin with username and password
     parameters:
       - name: username
         in: formData
-        description: Admin username
         required: true
-        type: string
+        schema:
+          type: string
       - name: password
         in: formData
-        description: Admin password
         required: true
-        type: string
+        schema:
+          type: string
     responses:
       200:
         description: Login successful
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                admin:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    username:
-                      type: string
-                message:
-                  type: string
-      400:
-        description: Invalid input
       401:
-        description: Login failed
+        description: Invalid credentials
     """
-    if 'admin_id' in session:
-        if is_json_requested():
-            admin = Admin.query.get(session['admin_id'])
-            return jsonify({
-                'success': True,
-                'message': 'Admin already logged in',
-                'admin': {
-                    'id': admin.id,
-                    'username': admin.username
-                }
-            })
-        return redirect(url_for('admin.dashboard'))
+    if 'user_id' in session:
+        session.pop('user_id', None)
+        session.pop('username', None)
+        session.pop('full_name', None)
+        session.pop('role', None)
     
     form = AdminLoginForm()
     
+    if request.method == 'GET':
+        session.pop('_csrf_token', None)
+    csrf_token = generate_csrf_token()
+    
     if request.method == 'POST':
-        if request.is_json:
+        print("Processing admin login POST request")
+        
+        if is_json_requested():
             data = request.get_json()
-            username = data.get('username')
-            password = data.get('password')
-        elif form.validate_on_submit():
+            username = data.get('username', '')
+            password = data.get('password', '')
+        else:
             username = form.username.data
             password = form.password.data
-        else:
-            username = request.form.get('username')
-            password = request.form.get('password')
-            
-        if not username or not password:
-            if is_json_requested():
-                return jsonify({
-                    'success': False,
-                    'message': 'Username and password are required'
-                }), 400
-            flash('Username and password are required', 'danger')
-            return render_template('auth/admin_login.html', form=form, title='Admin Login')
+            print(f"Form data received - Username: {username}")
         
         admin = Admin.query.filter_by(username=username).first()
+        print(f"Admin found: {admin is not None}")
         
-        if admin and bcrypt.check_password_hash(admin.password, password):
-            session['admin_id'] = admin.id
-            session['admin_username'] = admin.username
-            
-            if is_json_requested():
-                return jsonify({
-                    'success': True,
-                    'message': 'Admin login successful',
-                    'admin': {
-                        'id': admin.id,
-                        'username': admin.username
-                    }
-                })
-            
-            flash(f'Welcome, {admin.username}!', 'success')
-            return redirect(url_for('admin.dashboard'))
-        else:
-            if is_json_requested():
-                return jsonify({
-                    'success': False,
-                    'message': 'Invalid username or password'
-                }), 401
-            flash('Invalid username or password', 'danger')
+        if admin:
+            password_correct = False
+            try:
+                password_correct = admin.check_password(password)
+                print(f"Password check result: {password_correct}")
+            except Exception as e:
+                print(f"Password check error: {str(e)}")
+                
+            if password_correct:
+                session['admin_id'] = admin.id
+                session['admin_username'] = admin.username
+                session['role'] = 'ADMIN'
+                
+                if is_json_requested():
+                    return jsonify({
+                        'success': True,
+                        'message': 'Admin login successful'
+                    })
+                
+                flash('Admin login successful!', 'success')
+                return redirect(url_for('admin.dashboard'))
+        
+        if is_json_requested():
+            return jsonify({
+                'success': False,
+                'message': 'Invalid admin credentials'
+            }), 401
+                
+        flash('Invalid admin credentials. Please try again.', 'danger')
     
-    return render_template('auth/admin_login.html', form=form, title='Admin Login')
+    return render_template('auth/admin_login.html', form=form, csrf_token=csrf_token)
 
-@auth.route('/register', methods=['POST', 'GET'])
+@auth.route('/register', methods=['GET', 'POST'])
 def register():
     """
-    User Registration
+    User Registration API
     ---
     tags:
-      - auth
-    summary: Register new user
-    description: Register a new user account
-    consumes:
-      - application/x-www-form-urlencoded
-      - application/json
+      - Authentication
+    summary: Register a new user
+    description: Creates a new user account
     parameters:
-      - name: name
+      - name: username
         in: formData
-        description: User full name
         required: true
-        type: string
-      - name: email
-        in: formData
-        description: User email
-        required: true
-        type: string
+        schema:
+          type: string
       - name: password
         in: formData
-        description: User password
         required: true
-        type: string
-      - name: confirm_password
+        schema:
+          type: string
+      - name: full_name
         in: formData
-        description: Password confirmation
         required: true
-        type: string
+        schema:
+          type: string
+      - name: qualification
+        in: formData
+        required: true
+        schema:
+          type: string
+      - name: dob
+        in: formData
+        required: true
+        schema:
+          type: string
+          format: date
     responses:
       201:
         description: Registration successful
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                user:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    name:
-                      type: string
-                    email:
-                      type: string
-                message:
-                  type: string
       400:
         description: Invalid input or user already exists
     """
     if 'user_id' in session:
-        if is_json_requested():
-            return jsonify({
-                'success': False,
-                'message': 'You are already logged in'
-            }), 400
-        flash('You are already logged in', 'info')
-        if session['role'] == 'ADMIN':
-            return redirect(url_for('admin.dashboard'))
-        return redirect(url_for('user.dashboard'))
-    
+        session.pop('user_id', None)
+        session.pop('role', None)
+    if 'admin_id' in session:
+        session.pop('admin_id', None)
+        session.pop('role', None)
+        
     form = RegistrationForm()
     
+    csrf_token = generate_csrf_token()
+    
     if request.method == 'POST':
-        if request.is_json:
+        if is_json_requested():
             data = request.get_json()
-            name = data.get('name')
-            email = data.get('email')
-            password = data.get('password')
-            confirm_password = data.get('confirm_password')
-        elif form.validate_on_submit():
-            name = form.name.data
-            email = form.email.data
-            password = form.password.data
-            confirm_password = form.confirm_password.data
+            username = data.get('username', '')
+            password = data.get('password', '')
+            full_name = data.get('full_name', '')
+            qualification = data.get('qualification', '')
+            dob = data.get('dob', '')
         else:
-            name = request.form.get('name')
-            email = request.form.get('email')
-            password = request.form.get('password')
-            confirm_password = request.form.get('confirm_password')
+            if form.validate_on_submit():
+                username = form.username.data
+                password = form.password.data
+                full_name = form.full_name.data
+                qualification = form.qualification.data
+                dob = form.dob.data
+            else:
+                flash('Please check your input and try again.', 'danger')
+                return render_template('auth/register.html', form=form, csrf_token=csrf_token)
         
-        validation_errors = []
-        if not name or not email or not password or not confirm_password:
-            validation_errors.append('All fields are required')
-        
-        if password != confirm_password:
-            validation_errors.append('Passwords do not match')
-        
-        existing_user = User.query.filter_by(email=email).first()
+        existing_user = User.query.filter_by(username=username).first()
         if existing_user:
-            validation_errors.append('Email already registered')
-        
-        if validation_errors:
             if is_json_requested():
                 return jsonify({
                     'success': False,
-                    'message': 'Validation failed',
-                    'errors': validation_errors
+                    'message': 'Username already exists'
                 }), 400
-            for error in validation_errors:
-                flash(error, 'danger')
-            return render_template('auth/register.html', form=form, title='Register')
+                
+            flash('Username already exists. Please choose a different one.', 'danger')
+            return render_template('auth/register.html', form=form, csrf_token=csrf_token)
         
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        new_user = User(username=username, full_name=full_name, 
+                       qualification=qualification, dob=dob)
+        new_user.set_password(password)
         
-        new_user = User(name=name, email=email, password=hashed_password, role='USER')
-        db.session.add(new_user)
-        db.session.commit()
-        
-        if is_json_requested():
-            return jsonify({
-                'success': True,
-                'message': 'Registration successful. You can now login.',
-                'user': {
-                    'id': new_user.id,
-                    'name': new_user.name,
-                    'email': new_user.email
-                }
-            }), 201
-        
-        flash('Registration successful! You can now login.', 'success')
-        return redirect(url_for('auth.login'))
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            
+            if is_json_requested():
+                return jsonify({
+                    'success': True,
+                    'message': 'Registration successful',
+                    'user': {
+                        'username': new_user.username,
+                        'full_name': new_user.full_name
+                    }
+                }), 201
+                
+            flash('Account created successfully! You can now log in.', 'success')
+            return redirect(url_for('auth.login'))
+        except Exception as e:
+            db.session.rollback()
+            
+            if is_json_requested():
+                return jsonify({
+                    'success': False,
+                    'message': 'Registration failed: ' + str(e)
+                }), 500
+                
+            flash('An error occurred during registration. Please try again.', 'danger')
     
-    return render_template('auth/register.html', form=form, title='Register')
+    return render_template('auth/register.html', form=form, csrf_token=csrf_token)
 
 @auth.route('/logout')
 def logout():
@@ -414,17 +392,4 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.index'))
 
-@auth.route('/api')
-def api_info():
-    """
-    API Information
-    ---
-    tags:
-      - api
-    summary: Get API information
-    description: Get information about the API endpoints and documentation
-    responses:
-      200:
-        description: Successful operation
-    """
-    return render_template('api_info.html', title='API Documentation') 
+# The apidocs route was removed as it's redundant with Swagger UI accessible at /api/docs/ 

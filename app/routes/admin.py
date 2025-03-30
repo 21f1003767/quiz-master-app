@@ -1,9 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, session, flash, request, jsonify
-from app.models.models import Admin, User, Subject, Chapter, Quiz, Question, db
+from app.models.models import Admin, User, Subject, Chapter, Quiz, Question, Score, db
 from app.forms import SubjectForm, ChapterForm, QuizForm, QuestionForm
 from app.utils import is_json_requested, serialize_subject, serialize_chapter, serialize_quiz, serialize_question, serialize_score
 from flask_login import login_required
-from app.routes.auth import admin_required
+from app.routes.auth import admin_required, csrf_protected
+from datetime import datetime
 
 admin = Blueprint('admin', __name__)
 
@@ -139,6 +140,7 @@ def subject_list():
 
 @admin.route('/subjects/create', methods=['GET', 'POST'])
 @admin_required
+@csrf_protected
 def subject_create():
     """
     Create Subject
@@ -203,7 +205,8 @@ def subject_create():
     if form.validate_on_submit():
         subject = Subject(
             name=form.name.data,
-            description=form.description.data
+            description=form.description.data,
+            created_at=datetime.utcnow()
         )
         db.session.add(subject)
         db.session.commit()
@@ -297,6 +300,7 @@ def subject_detail(id):
 
 @admin.route('/subjects/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
+@csrf_protected
 def subject_edit(id):
     """
     Edit Subject
@@ -395,6 +399,7 @@ def subject_edit(id):
 
 @admin.route('/subjects/delete/<int:id>', methods=['POST', 'DELETE'])
 @admin_required
+@csrf_protected
 def subject_delete(id):
     """
     Delete Subject
@@ -564,6 +569,7 @@ def chapter_list():
 
 @admin.route('/chapters/create', methods=['GET', 'POST'])
 @admin_required
+@csrf_protected
 def chapter_create():
     """
     Create Chapter
@@ -638,7 +644,8 @@ def chapter_create():
         chapter = Chapter(
             name=form.name.data,
             description=form.description.data,
-            subject_id=form.subject_id.data
+            subject_id=form.subject_id.data,
+            created_at=datetime.utcnow()
         )
         db.session.add(chapter)
         db.session.commit()
@@ -679,6 +686,7 @@ def chapter_detail(id):
 
 @admin.route('/chapters/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
+@csrf_protected
 def chapter_edit(id):
     chapter = Chapter.query.get_or_404(id)
     form = ChapterForm(obj=chapter)
@@ -713,6 +721,7 @@ def chapter_edit(id):
 
 @admin.route('/chapters/delete/<int:id>', methods=['POST', 'DELETE'])
 @admin_required
+@csrf_protected
 def chapter_delete(id):
     chapter = Chapter.query.get_or_404(id)
     db.session.delete(chapter)
@@ -791,6 +800,7 @@ def quiz_list():
 
 @admin.route('/quizzes/create', methods=['GET', 'POST'])
 @admin_required
+@csrf_protected
 def quiz_create():
     """
     Create Quiz
@@ -993,7 +1003,69 @@ def quiz_detail(id):
 
 @admin.route('/quizzes/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
+@csrf_protected
 def quiz_edit(id):
+    """
+    Edit Quiz
+    ---
+    tags:
+      - admin
+    summary: Edit an existing quiz
+    description: Update a quiz with new information
+    parameters:
+      - name: id
+        in: path
+        description: ID of the quiz to edit
+        required: true
+        schema:
+          type: integer
+    requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                chapter_id:
+                  type: integer
+                date_of_quiz:
+                  type: string
+                  format: date
+                time_duration:
+                  type: string
+                  format: time
+                remarks:
+                  type: string
+    responses:
+      200:
+        description: Quiz updated successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                message:
+                  type: string
+                quiz:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    title:
+                      type: string
+                    chapter_id:
+                      type: integer
+                    date_of_quiz:
+                      type: string
+                      format: date
+      400:
+        description: Invalid input data
+      404:
+        description: Quiz not found
+    """
     quiz = Quiz.query.get_or_404(id)
     form = QuizForm(obj=quiz)
     form.chapter_id.choices = [(c.id, f"{c.name} ({c.subject.name})") for c in Chapter.query.all()]
@@ -1029,7 +1101,37 @@ def quiz_edit(id):
 
 @admin.route('/quizzes/delete/<int:id>', methods=['POST', 'DELETE'])
 @admin_required
+@csrf_protected
 def quiz_delete(id):
+    """
+    Delete Quiz
+    ---
+    tags:
+      - admin
+    summary: Delete a quiz
+    description: Permanently delete a quiz and all associated questions
+    parameters:
+      - name: id
+        in: path
+        description: ID of the quiz to delete
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Quiz deleted successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                message:
+                  type: string
+      404:
+        description: Quiz not found
+    """
     quiz = Quiz.query.get_or_404(id)
     db.session.delete(quiz)
     db.session.commit()
@@ -1119,6 +1221,7 @@ def question_list(quiz_id):
 
 @admin.route('/quizzes/<int:quiz_id>/questions/create', methods=['GET', 'POST'])
 @admin_required
+@csrf_protected
 def question_create(quiz_id):
     """
     Create Question
@@ -1251,7 +1354,72 @@ def question_create(quiz_id):
 
 @admin.route('/questions/edit/<int:id>', methods=['GET', 'POST'])
 @admin_required
+@csrf_protected
 def question_edit(id):
+    """
+    Edit Question
+    ---
+    tags:
+      - admin
+    summary: Edit a quiz question
+    description: Update an existing question's details
+    parameters:
+      - name: id
+        in: path
+        description: ID of the question to edit
+        required: true
+        schema:
+          type: integer
+    requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question_statement:
+                  type: string
+                option1:
+                  type: string
+                option2:
+                  type: string
+                option3:
+                  type: string
+                option4:
+                  type: string
+                correct_option:
+                  type: integer
+                  minimum: 1
+                  maximum: 4
+    responses:
+      200:
+        description: Question updated successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                message:
+                  type: string
+                question:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    question_statement:
+                      type: string
+                    options:
+                      type: array
+                      items:
+                        type: string
+                    correct_option:
+                      type: integer
+      400:
+        description: Invalid input data
+      404:
+        description: Question not found
+    """
     question = Question.query.get_or_404(id)
     quiz = Quiz.query.get_or_404(question.quiz_id)
     form = QuestionForm(obj=question)
@@ -1289,7 +1457,37 @@ def question_edit(id):
 
 @admin.route('/questions/delete/<int:id>', methods=['POST', 'DELETE'])
 @admin_required
+@csrf_protected
 def question_delete(id):
+    """
+    Delete Question
+    ---
+    tags:
+      - admin
+    summary: Delete a question
+    description: Permanently delete a question from a quiz
+    parameters:
+      - name: id
+        in: path
+        description: ID of the question to delete
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Question deleted successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                message:
+                  type: string
+      404:
+        description: Question not found
+    """
     question = Question.query.get_or_404(id)
     quiz_id = question.quiz_id
     db.session.delete(question)
@@ -1307,6 +1505,40 @@ def question_delete(id):
 @admin.route('/users')
 @admin_required
 def user_list():
+    """
+    List Users
+    ---
+    tags:
+      - admin
+    summary: Get all registered users
+    description: Returns a list of all users in the system
+    responses:
+      200:
+        description: List of users
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                count:
+                  type: integer
+                users:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      username:
+                        type: string
+                      full_name:
+                        type: string
+                      created_at:
+                        type: string
+                        format: date-time
+    """
     users = User.query.all()
     
     if is_json_requested():
@@ -1333,6 +1565,80 @@ def user_list():
 @admin.route('/search', methods=['GET'])
 @admin_required
 def search():
+    """
+    Admin Search API
+    ---
+    tags:
+      - admin
+    summary: Search across all content
+    description: Search for subjects, chapters, quizzes, questions, and users
+    parameters:
+      - name: query
+        in: query
+        description: Search query
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        description: Type of content to search
+        required: false
+        schema:
+          type: string
+          enum: [all, subjects, chapters, quizzes, questions, users]
+          default: all
+    responses:
+      200:
+        description: Search results
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                query:
+                  type: string
+                search_type:
+                  type: string
+                subjects:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      name:
+                        type: string
+                      description:
+                        type: string
+                chapters:
+                  type: array
+                  items:
+                    type: object
+                quizzes:
+                  type: array
+                  items:
+                    type: object
+                questions:
+                  type: array
+                  items:
+                    type: object
+                users:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      username:
+                        type: string
+                      full_name:
+                        type: string
+                      created_at:
+                        type: string
+                        format: date-time
+    """
     query = request.args.get('query', '')
     search_type = request.args.get('type', 'all')
     
@@ -1428,4 +1734,57 @@ def search():
                            chapters=chapter_results,
                            quizzes=quiz_results,
                            questions=question_results,
-                           users=user_results) 
+                           users=user_results)
+
+    
+@admin.route('/subjects', methods=['GET', 'POST'])
+@admin_required
+@csrf_protected
+def manage_subjects():
+    """
+    Manage Subjects
+    ---
+    tags:
+      - admin
+    summary: Manage all subjects
+    description: View and manage all subjects in one interface
+    responses:
+      200:
+        description: Subject management page
+    """
+    subjects = Subject.query.all()
+    return render_template('admin/subjects.html', title='Manage Subjects', subjects=subjects)
+
+@admin.route('/users')
+@admin_required
+def manage_users():
+    """
+    Manage Users
+    ---
+    tags:
+      - admin
+    summary: Manage all users
+    description: View and manage all users in one interface
+    responses:
+      200:
+        description: User management page
+    """
+    users = User.query.all()
+    return render_template('admin/users.html', title='Manage Users', users=users)
+
+@admin.route('/quizzes')
+@admin_required
+def manage_quizzes():
+    """
+    Manage Quizzes
+    ---
+    tags:
+      - admin
+    summary: Manage all quizzes
+    description: View and manage all quizzes in one interface
+    responses:
+      200:
+        description: Quiz management page
+    """
+    quizzes = Quiz.query.all()
+    return render_template('admin/quizzes.html', title='Manage Quizzes', quizzes=quizzes) 

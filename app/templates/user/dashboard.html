@@ -118,7 +118,7 @@
             const result = await API.getSubjects();
             
             const container = document.getElementById('subjects-container');
-            container.innerHTML = ''; // Clear loading indicator
+            container.innerHTML = '';
             
             if (result.subjects.length === 0) {
                 container.innerHTML = `
@@ -130,8 +130,7 @@
                 `;
                 return;
             }
-            
-            // Display only up to 3 most recent subjects
+
             const recentSubjects = result.subjects.slice(0, 3);
             
             recentSubjects.forEach(subject => {
@@ -169,7 +168,7 @@
             const result = await API.getUserScores();
             
             const container = document.getElementById('scores-container');
-            container.innerHTML = ''; // Clear loading indicator
+            container.innerHTML = '';
             
             if (result.scores.length === 0) {
                 container.innerHTML = `
@@ -179,15 +178,13 @@
                 `;
                 return;
             }
-            
-            // Display only up to 5 most recent scores
+
             const recentScores = result.scores.slice(0, 5);
             
             const scoresList = document.createElement('ul');
             scoresList.className = 'list-group';
             
             recentScores.forEach(score => {
-                // Calculate badge class based on score percentage
                 let badgeClass = 'bg-danger';
                 const percentage = score.percentage;
                 

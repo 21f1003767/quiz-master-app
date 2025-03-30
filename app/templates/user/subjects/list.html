@@ -41,7 +41,7 @@
             const result = await API.getSubjects();
             
             const container = document.getElementById('subjects-container');
-            container.innerHTML = ''; // Clear loading indicator
+            container.innerHTML = ''; 
             
             if (result.subjects.length === 0) {
                 container.innerHTML = `

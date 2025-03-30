@@ -46,7 +46,6 @@
 
 {% block scripts %}
 <script>
-    // Get the chapter ID from the URL
     const pathParts = window.location.pathname.split('/');
     const chapterId = pathParts[pathParts.indexOf('chapters') + 1];
     
@@ -56,16 +55,12 @@
     
     async function loadChapterAndQuizzes(chapterId) {
         try {
-            // Get quizzes with chapter info
             const quizzesData = await API.getQuizzesByChapter(chapterId);
             
-            // Update chapter information
             updateChapterInfo(quizzesData);
             
-            // Update quizzes list
             updateQuizzesList(quizzesData);
             
-            // Update back navigation
             updateBackNavigation(quizzesData.subject_id);
         } catch (error) {
             handleError(error);
@@ -94,7 +89,7 @@
     
     function updateQuizzesList(data) {
         const container = document.getElementById('quizzes-container');
-        container.innerHTML = ''; // Clear loading indicator
+        container.innerHTML = '';
         
         if (data.quizzes.length === 0) {
             container.innerHTML = `
@@ -107,7 +102,6 @@
             return;
         }
         
-        // Create a card with quizzes table
         container.innerHTML = `
             <div class="col-md-12">
                 <div class="card">
@@ -140,7 +134,6 @@
         const quizzesList = document.getElementById('quizzes-list');
         
         data.quizzes.forEach((quiz, index) => {
-            // Determine quiz status
             let status = '';
             if (quiz.attempted) {
                 status = '<span class="badge bg-success">Completed</span>';
@@ -152,7 +145,6 @@
                 status = '<span class="badge bg-danger">Expired</span>';
             }
             
-            // Determine action button
             let actionButton = '';
             if (quiz.attempted) {
                 actionButton = `
@@ -220,7 +212,6 @@
             </div>
         `;
         
-        // Default back navigation when error occurs
         const backNav = document.getElementById('back-nav');
         backNav.innerHTML = `
             <div class="col-md-12">

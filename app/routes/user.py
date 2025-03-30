@@ -1,25 +1,26 @@
 from flask import Blueprint, render_template, session, redirect, url_for, request, flash, jsonify, abort
 from app.models.models import User, Subject, Quiz, Score, Chapter, Question, db
-from app.routes.auth import login_required
+from app.routes.auth import login_required, user_required
 from app.utils import is_json_requested, serialize_subject, serialize_chapter, serialize_quiz, serialize_question, serialize_score
 from datetime import datetime
 import json
+from sqlalchemy import desc, or_
 
 user = Blueprint('user', __name__)
 
 @user.route('/dashboard')
-@login_required
+@user_required
 def dashboard():
     """
-    User Dashboard
+    User Dashboard API
     ---
     tags:
-      - user
+      - User
     summary: Get user dashboard data
-    description: Returns user information, recent subjects, and recent scores
+    description: Returns the dashboard view with user's data, recent scores, and subject recommendations
     responses:
       200:
-        description: Successful operation
+        description: Dashboard data
         content:
           application/json:
             schema:
@@ -27,61 +28,45 @@ def dashboard():
               properties:
                 success:
                   type: boolean
+                  example: true
                 user:
                   type: object
                   properties:
-                    id:
-                      type: integer
                     username:
                       type: string
+                      example: user@example.com
                     full_name:
                       type: string
+                      example: John Doe
                     qualification:
                       type: string
-                    dob:
-                      type: string
-                      format: date
-                recent_subjects:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      name:
-                        type: string
-                      description:
-                        type: string
-                      created_at:
-                        type: string
-                        format: date-time
-                      chapters_count:
-                        type: integer
+                      example: Bachelor's Degree
                 recent_scores:
                   type: array
                   items:
                     type: object
                     properties:
-                      id:
-                        type: integer
-                      quiz_id:
-                        type: integer
-                      quiz_title:
+                      subject:
                         type: string
-                      chapter_name:
-                        type: string
-                      subject_name:
-                        type: string
-                      total_scored:
+                        example: Mathematics
+                      score:
                         type: integer
-                      total_questions:
-                        type: integer
-                      percentage:
-                        type: number
-                        format: float
-                      attempt_date:
+                        example: 85
+                      date:
                         type: string
                         format: date-time
+                        example: 2023-05-15T14:30:00Z
+                recommended_subjects:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: Physics
     """
     user_id = session['user_id']
     user = User.query.get(user_id)
@@ -108,18 +93,18 @@ def dashboard():
                            user=user)
 
 @user.route('/subjects')
-@login_required
+@user_required
 def subject_list():
     """
-    Subjects List
+    List Available Subjects API
     ---
     tags:
-      - user
-    summary: Get all subjects
-    description: Returns a list of all available subjects
+      - Subjects
+    summary: Get all available subjects
+    description: Returns a list of all subjects available for quizzes
     responses:
       200:
-        description: Successful operation
+        description: List of subjects
         content:
           application/json:
             schema:
@@ -127,8 +112,10 @@ def subject_list():
               properties:
                 success:
                   type: boolean
+                  example: true
                 count:
                   type: integer
+                  example: 10
                 subjects:
                   type: array
                   items:
@@ -136,15 +123,13 @@ def subject_list():
                     properties:
                       id:
                         type: integer
+                        example: 1
                       name:
                         type: string
+                        example: Mathematics
                       description:
                         type: string
-                      created_at:
-                        type: string
-                        format: date-time
-                      chapters_count:
-                        type: integer
+                        example: Basic mathematical concepts and problem-solving
     """
     subjects = Subject.query.all()
     
@@ -161,7 +146,42 @@ def subject_list():
 @user.route('/subjects/<int:subject_id>')
 @login_required
 def subject_detail(subject_id):
-    """Get a specific subject by ID"""
+    """
+    Subject Detail
+    ---
+    tags:
+      - user
+    summary: Get a specific subject by ID
+    description: Returns details for a specific subject
+    parameters:
+      - name: subject_id
+        in: path
+        description: ID of the subject
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Successful operation
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                subject:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    description:
+                      type: string
+      404:
+        description: Subject not found
+    """
     subject = Subject.query.get_or_404(subject_id)
     
     if is_json_requested():
@@ -248,7 +268,44 @@ def chapter_list(subject_id):
 @user.route('/chapters/<int:chapter_id>')
 @login_required
 def chapter_detail(chapter_id):
-    """Get a specific chapter by ID"""
+    """
+    Chapter Detail
+    ---
+    tags:
+      - user
+    summary: Get a specific chapter by ID
+    description: Returns details for a specific chapter
+    parameters:
+      - name: chapter_id
+        in: path
+        description: ID of the chapter
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Successful operation
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                chapter:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    description:
+                      type: string
+                    subject_id:
+                      type: integer
+      404:
+        description: Chapter not found
+    """
     chapter = Chapter.query.get_or_404(chapter_id)
     
     if is_json_requested():
@@ -376,7 +433,47 @@ def quiz_list(chapter_id):
 @user.route('/quizzes/<int:quiz_id>')
 @login_required
 def quiz_detail(quiz_id):
-    """Get a specific quiz by ID"""
+    """
+    Quiz Detail
+    ---
+    tags:
+      - user
+    summary: Get a specific quiz by ID
+    description: Returns details for a specific quiz
+    parameters:
+      - name: quiz_id
+        in: path
+        description: ID of the quiz
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Successful operation
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                quiz:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    time_duration:
+                      type: string
+                    date_of_quiz:
+                      type: string
+                      format: date
+      404:
+        description: Quiz not found
+    """
     user_id = session['user_id']
     quiz = Quiz.query.get_or_404(quiz_id)
     
@@ -495,6 +592,56 @@ def quiz_questions(quiz_id):
 @user.route('/quizzes/<int:quiz_id>/start')
 @login_required
 def quiz_start(quiz_id):
+    """
+    Start Quiz
+    ---
+    tags:
+      - user
+    summary: Start a quiz
+    description: Prepares a quiz for attempting and returns quiz questions
+    parameters:
+      - name: quiz_id
+        in: path
+        description: ID of the quiz
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Successful operation
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                quiz_id:
+                  type: integer
+                title:
+                  type: string
+                time_duration:
+                  type: string
+                total_seconds:
+                  type: integer
+                questions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      question_statement:
+                        type: string
+                      options:
+                        type: array
+                        items:
+                          type: string
+      403:
+        description: Quiz already attempted or not available
+      404:
+        description: Quiz not found or has no questions
+    """
     user_id = session['user_id']
     quiz = Quiz.query.get_or_404(quiz_id)
   
@@ -707,6 +854,28 @@ def quiz_submit(quiz_id):
 @user.route('/quizzes/<int:quiz_id>/result')
 @login_required
 def quiz_result(quiz_id):
+    """
+    Quiz Result
+    ---
+    tags:
+      - user
+    summary: Get quiz result
+    description: Returns the result of a completed quiz
+    parameters:
+      - name: quiz_id
+        in: path
+        description: ID of the quiz
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Quiz result page
+      302:
+        description: Redirect to dashboard if no results found
+      404:
+        description: Quiz not found
+    """
     user_id = session['user_id']
     quiz = Quiz.query.get_or_404(quiz_id)
     
@@ -733,6 +902,73 @@ def quiz_result(quiz_id):
 @user.route('/quiz-history')
 @login_required
 def quiz_history():
+    """
+    Quiz History
+    ---
+    tags:
+      - user
+    summary: Get user's quiz history
+    description: Returns the history of all quizzes attempted by the user
+    responses:
+      200:
+        description: Quiz history page with statistics
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                total_quizzes:
+                  type: integer
+                total_questions:
+                  type: integer
+                total_correct:
+                  type: integer
+                avg_score:
+                  type: number
+                  format: float
+                subject_performance:
+                  type: object
+                  additionalProperties:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      total_quizzes:
+                        type: integer
+                      total_questions:
+                        type: integer
+                      total_correct:
+                        type: integer
+                      percentage:
+                        type: number
+                        format: float
+                scores:
+                  type: array
+                  items:
+                    $ref: '#/definitions/Score'
+    definitions:
+      Score:
+        type: object
+        properties:
+          id:
+            type: integer
+          quiz_title:
+            type: string
+          subject_name:
+            type: string
+          total_scored:
+            type: integer
+          total_questions:
+            type: integer
+          percentage:
+            type: number
+            format: float
+          date:
+            type: string
+            format: date-time
+    """
     user_id = session['user_id']
     user = User.query.get(user_id)
 
@@ -783,6 +1019,26 @@ def quiz_history():
 @user.route('/quizzes/<int:quiz_id>/report')
 @login_required
 def quiz_report(quiz_id):
+    """
+    Quiz Report
+    ---
+    tags:
+      - user
+    summary: Get detailed quiz report
+    description: Returns a detailed report for a completed quiz
+    parameters:
+      - name: quiz_id
+        in: path
+        description: ID of the quiz
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        description: Detailed quiz report
+      404:
+        description: Quiz not found or not attempted
+    """
     user_id = session['user_id']
     quiz = Quiz.query.get_or_404(quiz_id)
  
@@ -806,18 +1062,18 @@ def quiz_report(quiz_id):
                           avg_score=avg_score)
 
 @user.route('/scores')
-@login_required
+@user_required
 def user_scores():
     """
-    User Scores
+    User Scores API
     ---
     tags:
-      - user
-    summary: Get user quiz scores
+      - Scores
+    summary: Get user's quiz scores
     description: Returns all scores for the current user
     responses:
       200:
-        description: Successful operation
+        description: User's scores
         content:
           application/json:
             schema:
@@ -825,8 +1081,7 @@ def user_scores():
               properties:
                 success:
                   type: boolean
-                count:
-                  type: integer
+                  example: true
                 scores:
                   type: array
                   items:
@@ -834,24 +1089,24 @@ def user_scores():
                     properties:
                       id:
                         type: integer
-                      quiz_id:
-                        type: integer
-                      quiz_title:
+                        example: 1
+                      subject:
                         type: string
-                      chapter_name:
-                        type: string
-                      subject_name:
-                        type: string
-                      total_questions:
+                        example: Chemistry
+                      score:
                         type: integer
-                      total_scored:
+                        example: 92
+                      max_score:
                         type: integer
+                        example: 100
                       percentage:
                         type: number
                         format: float
-                      attempt_date:
+                        example: 92.0
+                      date:
                         type: string
                         format: date-time
+                        example: 2023-06-20T10:15:00Z
     """
     user_id = session['user_id']
     scores = Score.query.filter_by(user_id=user_id).order_by(Score.id.desc()).all()
@@ -868,15 +1123,15 @@ def user_scores():
                            scores=scores)
 
 @user.route('/search')
-@login_required
+@user_required
 def search():
     """
-    Search
+    Search API
     ---
     tags:
-      - user
-    summary: Search subjects, chapters, and quizzes
-    description: Performs a search across subjects, chapters, and quizzes
+      - Search
+    summary: Search for content
+    description: Returns search results based on query and type
     parameters:
       - name: query
         in: query
@@ -894,7 +1149,7 @@ def search():
           default: all
     responses:
       200:
-        description: Successful operation
+        description: Search results
         content:
           application/json:
             schema:
@@ -902,6 +1157,7 @@ def search():
               properties:
                 success:
                   type: boolean
+                  example: true
                 query:
                   type: string
                 search_type:
@@ -972,11 +1228,12 @@ def search():
                 'quizzes': []
             })
         return render_template('user/search/results.html', 
-                               title='Search Results',
-                               query=query,
-                               subjects=[],
-                               chapters=[],
-                               quizzes=[])
+                              title='Search Results',
+                              query=query,
+                              search_type=search_type,
+                              subjects=[],
+                              chapters=[],
+                              quizzes=[])
     
     subject_results = []
     if search_type in ['all', 'subjects']:
@@ -1008,10 +1265,11 @@ def search():
             'chapters': [serialize_chapter(chapter) for chapter in chapter_results],
             'quizzes': [serialize_quiz(quiz) for quiz in quiz_results]
         })
-        
+    
     return render_template('user/search/results.html', 
-                           title='Search Results',
-                           query=query,
-                           subjects=subject_results,
-                           chapters=chapter_results,
-                           quizzes=quiz_results) 
+                          title='Search Results',
+                          query=query,
+                          search_type=search_type,
+                          subjects=subject_results,
+                          chapters=chapter_results,
+                          quizzes=quiz_results) 
