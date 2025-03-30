@@ -282,7 +282,7 @@
             const scoresData = await API.getUserScores();
             const subjectsData = await API.getSubjects();
             
-                if (scoresData.scores.length === 0) {
+            if (scoresData.scores.length === 0) {
                 document.getElementById('scoresTrendChart').parentNode.innerHTML = 
                     '<div class="alert alert-info">No quiz data available to display trends.</div>';
                 document.getElementById('subjectPerformanceChart').parentNode.innerHTML = 
@@ -302,7 +302,7 @@
             
             const scores = scoresData.scores;
             
-            const recentScores = scores.slice(0, 10).reverse(); 
+            const recentScores = scores.slice(0, 10).reverse();
             createScoresTrendChart(recentScores);
             
             createSubjectPerformanceChart(scores, subjectsData.subjects);

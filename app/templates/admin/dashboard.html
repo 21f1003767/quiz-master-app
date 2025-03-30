@@ -17,7 +17,7 @@
     </div>
     
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="card-title mb-0">User Overview</h5>
@@ -92,7 +92,7 @@
             </div>
         </div>
         
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
                     <h5 class="card-title mb-0">Quick Actions</h5>
@@ -117,52 +117,7 @@
                     </div>
                 </div>
             </div>
-            
             <div class="card mb-4">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="card-title mb-0"><i class="bi bi-bell"></i> System Notifications</h5>
-                </div>
-                <div class="card-body p-0">
-                    <ul class="list-group list-group-flush" id="system-notifications">
-                        <li class="list-group-item d-flex align-items-center border-0">
-                            <span class="badge bg-warning text-dark rounded-circle me-2">
-                                <i class="bi bi-exclamation"></i>
-                            </span>
-                            <div>
-                                <div class="fw-bold">System Update Available</div>
-                                <div class="small text-muted">New version 2.1.0 is ready for installation</div>
-                            </div>
-                        </li>
-                        <li class="list-group-item d-flex align-items-center border-0">
-                            <span class="badge bg-info text-white rounded-circle me-2">
-                                <i class="bi bi-info"></i>
-                            </span>
-                            <div>
-                                <div class="fw-bold">5 New User Registrations</div>
-                                <div class="small text-muted">In the last 24 hours</div>
-                            </div>
-                        </li>
-                        <li class="list-group-item d-flex align-items-center border-0">
-                            <span class="badge bg-success text-white rounded-circle me-2">
-                                <i class="bi bi-check"></i>
-                            </span>
-                            <div>
-                                <div class="fw-bold">Database Backup Completed</div>
-                                <div class="small text-muted">Last backup: Today, 03:15 AM</div>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-                <div class="card-footer bg-transparent text-center">
-                    <a href="/admin/notifications" class="text-decoration-none">View All Notifications</a>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="row mt-4">
-        <div class="col-md-12">
-            <div class="card">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">System Analytics</h5>
                     <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#chartsCollapse" aria-expanded="true" aria-controls="chartsCollapse">
@@ -186,48 +141,16 @@
                                 <h6 class="text-muted mb-3">Subject Popularity</h6>
                                 <canvas id="subjectPopularityChart" height="200"></canvas>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <h6 class="text-muted mb-3">System Health</h6>
-                                <div class="card bg-light">
-                                    <div class="card-body">
-                                        <div id="systemHealth">
-                                            <div class="row text-center">
-                                                <div class="col-6 mb-3">
-                                                    <div class="border rounded p-2">
-                                                        <h5 class="text-success">98.7%</h5>
-                                                        <small class="text-muted">Uptime</small>
-                                                    </div>
-                                                </div>
-                                                <div class="col-6 mb-3">
-                                                    <div class="border rounded p-2">
-                                                        <h5>42ms</h5>
-                                                        <small class="text-muted">Avg. Response</small>
-                                                    </div>
-                                                </div>
-                                                <div class="col-6">
-                                                    <div class="border rounded p-2 bg-light">
-                                                        <h5 class="text-info">25%</h5>
-                                                        <small class="text-muted">CPU Usage</small>
-                                                    </div>
-                                                </div>
-                                                <div class="col-6">
-                                                    <div class="border rounded p-2 bg-light">
-                                                        <h5 class="text-info">40%</h5>
-                                                        <small class="text-muted">Memory Usage</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    
 </div>
+\
 {% endblock %}
 
 {% block scripts %}

@@ -109,7 +109,7 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover table-mobile-stack">
                                 <thead>
                                     <tr>
                                         <th>#</th>
@@ -167,14 +167,14 @@
             
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${quiz.title}</td>
-                <td>${new Date(quiz.date_of_quiz).toLocaleDateString()}</td>
-                <td>${quiz.time_duration}</td>
-                <td>${quiz.availability_window}</td>
-                <td>${quiz.questions_count}</td>
-                <td>${status}</td>
-                <td>${actionButton}</td>
+                <td data-label="#">${index + 1}</td>
+                <td data-label="Title">${quiz.title}</td>
+                <td data-label="Quiz Date">${new Date(quiz.date_of_quiz).toLocaleDateString()}</td>
+                <td data-label="Duration">${quiz.time_duration}</td>
+                <td data-label="Time Window">${quiz.availability_window}</td>
+                <td data-label="Questions">${quiz.questions_count}</td>
+                <td data-label="Status">${status}</td>
+                <td data-label="Action">${actionButton}</td>
             `;
             quizzesList.appendChild(row);
         });
