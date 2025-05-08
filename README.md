@@ -154,6 +154,11 @@ API documentation is available at `/api/docs/` using Swagger UI. This provides a
    ```
    pip install -r requirements.txt
    ```
+   
+   Note: If you want to run the `check.py` script to verify the source code integrity, you'll need to install the additional dependency:
+   ```
+   pip install checksumdir
+   ```
 
 3. Initialize the database:
    ```

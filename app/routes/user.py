@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, session, redirect, url_for, request, flash, jsonify, abort
 from app.models.models import User, Subject, Quiz, Score, Chapter, Question, db
-from app.routes.auth import login_required, user_required
-from app.utils import is_json_requested, serialize_subject, serialize_chapter, serialize_quiz, serialize_question, serialize_score
+from app.utils import is_json_request, serialize_subject, serialize_chapter, serialize_quiz, serialize_question, serialize_score, api_csrf_protected, ensure_csrf_token
 from datetime import datetime
 import json
 from sqlalchemy import desc, or_
@@ -28,7 +27,6 @@ def dashboard():
               properties:
                 success:
                   type: boolean
-                  example: true
                 user:
                   type: object
                   properties:
@@ -71,7 +69,7 @@ def dashboard():
     user_id = session['user_id']
     user = User.query.get(user_id)
     
-    if is_json_requested():
+    if is_json_request():
         subjects = Subject.query.order_by(Subject.id.desc()).limit(3).all()
         recent_scores = Score.query.filter_by(user_id=user_id).order_by(Score.time_stamp_of_attempt.desc()).limit(5).all()
         
@@ -133,7 +131,7 @@ def subject_list():
     """
     subjects = Subject.query.all()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'count': len(subjects),
@@ -144,7 +142,7 @@ def subject_list():
                           title='Available Subjects')
 
 @user.route('/subjects/<int:subject_id>')
-@login_required
+@user_required
 def subject_detail(subject_id):
     """
     Subject Detail
@@ -184,7 +182,7 @@ def subject_detail(subject_id):
     """
     subject = Subject.query.get_or_404(subject_id)
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'subject': serialize_subject(subject)
@@ -193,7 +191,7 @@ def subject_detail(subject_id):
     return redirect(url_for('user.chapter_list', subject_id=subject_id))
 
 @user.route('/subjects/<int:subject_id>/chapters')
-@login_required
+@user_required
 def chapter_list(subject_id):
     """
     List Chapters
@@ -252,7 +250,7 @@ def chapter_list(subject_id):
     for chapter in chapters:
         chapter.quiz_count = Quiz.query.filter_by(chapter_id=chapter.id).count()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'subject': serialize_subject(subject),
@@ -266,7 +264,7 @@ def chapter_list(subject_id):
                         title=f'Chapters - {subject.name}')
 
 @user.route('/chapters/<int:chapter_id>')
-@login_required
+@user_required
 def chapter_detail(chapter_id):
     """
     Chapter Detail
@@ -308,7 +306,7 @@ def chapter_detail(chapter_id):
     """
     chapter = Chapter.query.get_or_404(chapter_id)
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'chapter': serialize_chapter(chapter)
@@ -317,7 +315,7 @@ def chapter_detail(chapter_id):
     return redirect(url_for('user.quiz_list', chapter_id=chapter_id))
 
 @user.route('/chapters/<int:chapter_id>/quizzes')
-@login_required
+@user_required
 def quiz_list(chapter_id):
     """
     List Quizzes
@@ -413,7 +411,7 @@ def quiz_list(chapter_id):
         quiz.is_available = quiz.is_available()
         quiz.availability_window = quiz.get_availability_window()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'chapter': {
@@ -431,7 +429,7 @@ def quiz_list(chapter_id):
                          title=f'Quizzes - {chapter.name}')
 
 @user.route('/quizzes/<int:quiz_id>')
-@login_required
+@user_required
 def quiz_detail(quiz_id):
     """
     Quiz Detail
@@ -477,7 +475,7 @@ def quiz_detail(quiz_id):
     user_id = session['user_id']
     quiz = Quiz.query.get_or_404(quiz_id)
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'quiz': serialize_quiz(quiz, user_id)
@@ -486,7 +484,7 @@ def quiz_detail(quiz_id):
     return redirect(url_for('user.quiz_start', quiz_id=quiz_id))
 
 @user.route('/quizzes/<int:quiz_id>/questions')
-@login_required
+@user_required
 def quiz_questions(quiz_id):
     """
     Quiz Questions
@@ -545,7 +543,7 @@ def quiz_questions(quiz_id):
     
     existing_score = Score.query.filter_by(user_id=user_id, quiz_id=quiz_id).first()
     if existing_score:
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': False,
                 'message': f'You have already attempted this quiz. You scored {existing_score.total_scored} out of {existing_score.total_questions} questions.'
@@ -555,7 +553,7 @@ def quiz_questions(quiz_id):
     
     if not quiz.is_available():
         availability_window = quiz.get_availability_window()
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': False,
                 'message': f'This quiz is not available for attempt at this time. It is scheduled for {quiz.date_of_quiz.strftime("%Y-%m-%d")} during the time window {availability_window}.'
@@ -565,7 +563,7 @@ def quiz_questions(quiz_id):
     
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
     if not questions:
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': False,
                 'message': 'This quiz has no questions yet!'
@@ -576,7 +574,7 @@ def quiz_questions(quiz_id):
     duration_parts = quiz.time_duration.split(':')
     total_seconds = int(duration_parts[0]) * 3600 + int(duration_parts[1]) * 60
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'quiz_id': quiz.id,
@@ -590,64 +588,33 @@ def quiz_questions(quiz_id):
     return redirect(url_for('user.quiz_start', quiz_id=quiz_id))
 
 @user.route('/quizzes/<int:quiz_id>/start')
-@login_required
+@user_required
 def quiz_start(quiz_id):
     """
     Start Quiz
     ---
     tags:
-      - user
+      - User
     summary: Start a quiz
-    description: Prepares a quiz for attempting and returns quiz questions
+    description: Starts a quiz by user
     parameters:
       - name: quiz_id
         in: path
-        description: ID of the quiz
+        type: integer
         required: true
-        schema:
-          type: integer
+        description: The ID of the quiz
     responses:
       200:
-        description: Successful operation
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                quiz_id:
-                  type: integer
-                title:
-                  type: string
-                time_duration:
-                  type: string
-                total_seconds:
-                  type: integer
-                questions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      question_statement:
-                        type: string
-                      options:
-                        type: array
-                        items:
-                          type: string
-      403:
-        description: Quiz already attempted or not available
-      404:
-        description: Quiz not found or has no questions
+        description: Quiz started successfully
+      400:
+        description: Cannot start quiz
     """
     user_id = session['user_id']
     quiz = Quiz.query.get_or_404(quiz_id)
   
     existing_score = Score.query.filter_by(user_id=user_id, quiz_id=quiz_id).first()
     if existing_score:
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': False,
                 'message': f'You have already attempted this quiz. You scored {existing_score.total_scored} out of {existing_score.total_questions} questions.'
@@ -658,7 +625,7 @@ def quiz_start(quiz_id):
 
     if not quiz.is_available():
         availability_window = quiz.get_availability_window()
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': False,
                 'message': f'This quiz is not available for attempt at this time. It is scheduled for {quiz.date_of_quiz.strftime("%Y-%m-%d")} during the time window {availability_window}.'
@@ -668,7 +635,7 @@ def quiz_start(quiz_id):
 
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
     if not questions:
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': False,
                 'message': 'This quiz has no questions yet!'
@@ -679,7 +646,7 @@ def quiz_start(quiz_id):
     duration_parts = quiz.time_duration.split(':')
     total_seconds = int(duration_parts[0]) * 3600 + int(duration_parts[1]) * 60
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'quiz_id': quiz.id,
@@ -696,82 +663,56 @@ def quiz_start(quiz_id):
                           total_seconds=total_seconds)
 
 @user.route('/quizzes/<int:quiz_id>/submit', methods=['POST'])
-@login_required
+@user_required
 def quiz_submit(quiz_id):
     """
     Submit Quiz
     ---
     tags:
-      - user
-    summary: Submit quiz answers
-    description: Submit answers for a quiz and get the score
+      - User
+    summary: Submit a quiz
+    description: Submits a completed quiz with answers
     parameters:
       - name: quiz_id
         in: path
-        description: ID of the quiz
+        type: integer
         required: true
+        description: The ID of the quiz
+      - name: answers
+        in: body
+        required: true
+        description: The answers to the quiz questions
         schema:
-          type: integer
-    requestBody:
-      description: Quiz answers
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              answers:
-                type: object
-                additionalProperties:
-                  type: integer
-                example:
-                  "1": 3
-                  "2": 1
-                  "3": 4
+          type: object
+          properties:
+            answers:
+              type: object
+              additionalProperties:
+                type: string
     responses:
       200:
-        description: Successful operation
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                score_id:
-                  type: integer
-                total_scored:
-                  type: integer
-                total_questions:
-                  type: integer
-                percentage:
-                  type: number
-                  format: float
-                question_results:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      correct:
-                        type: boolean
-                      correct_option:
-                        type: integer
-                      user_answer:
-                        type: integer
+        description: Quiz submitted successfully
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            score:
+              type: integer
+            total:
+              type: integer
+            percentage:
+              type: number
       400:
-        description: Invalid input or no answers provided
-      403:
-        description: Quiz already attempted
-      404:
-        description: Quiz not found or has no questions
+        description: Cannot submit quiz
+      401:
+        description: Authentication required
     """
     user_id = session['user_id']
     quiz = Quiz.query.get_or_404(quiz_id)
     existing_score = Score.query.filter_by(user_id=user_id, quiz_id=quiz_id).first()
     if existing_score:
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': False,
                 'message': f'You have already attempted this quiz. You scored {existing_score.total_scored} out of {existing_score.total_questions} questions.'
@@ -834,7 +775,7 @@ def quiz_submit(quiz_id):
     
     percentage = (score / total_questions) * 100 if total_questions > 0 else 0
     
-    if is_json_requested() or request.is_json:
+    if is_json_request() or request.is_json:
         return jsonify({
             'success': True,
             'score_id': new_score.id,
@@ -1111,7 +1052,7 @@ def user_scores():
     user_id = session['user_id']
     scores = Score.query.filter_by(user_id=user_id).order_by(Score.id.desc()).all()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'count': len(scores),
@@ -1218,7 +1159,7 @@ def search():
     search_type = request.args.get('type', 'all')
     
     if not query:
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': True,
                 'query': '',
@@ -1256,7 +1197,7 @@ def search():
             (Quiz.remarks.ilike(f'%{query}%'))
         ).all()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'query': query,

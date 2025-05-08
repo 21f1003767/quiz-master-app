@@ -1,10 +1,14 @@
 from flask import Blueprint, render_template, redirect, url_for, session, flash, request, jsonify
-from app.models.models import Admin, User, Subject, Chapter, Quiz, Question, Score, db
+from app.models.models import Admin, User, Subject, Chapter, Quiz, Question, Score, QuizQuestion
 from app.forms import SubjectForm, ChapterForm, QuizForm, QuestionForm
-from app.utils import is_json_requested, serialize_subject, serialize_chapter, serialize_quiz, serialize_question, serialize_score
-from flask_login import login_required
-from app.routes.auth import admin_required, csrf_protected
+from app.utils import (admin_required, is_json_request, serialize_subject, 
+                     serialize_chapter, serialize_quiz, serialize_question, 
+                     serialize_score, api_csrf_protected, ensure_csrf_token)
+from sqlalchemy.exc import SQLAlchemyError
+from app import db
 from datetime import datetime
+import secrets
+from flask_wtf import generate_csrf
 
 admin = Blueprint('admin', __name__)
 
@@ -67,7 +71,7 @@ def dashboard():
     
     recent_subjects = Subject.query.order_by(Subject.created_at.desc()).limit(5).all()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'counts': {
@@ -127,7 +131,7 @@ def subject_list():
     """
     subjects = Subject.query.all()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'count': len(subjects),
@@ -140,97 +144,96 @@ def subject_list():
 
 @admin.route('/subjects/create', methods=['GET', 'POST'])
 @admin_required
-@csrf_protected
 def subject_create():
     """
-    Create Subject
+    Create a new subject
     ---
     tags:
-      - admin
+      - Admin - Subjects
     summary: Create a new subject
-    description: Creates a new subject with the provided data
+    description: Create a new subject with the provided name and description
     security:
-      - session: []
-    consumes:
-      - application/json
-      - application/x-www-form-urlencoded
+      - ApiKeyAuth: []
     parameters:
       - name: name
         in: formData
-        description: Subject name
-        required: true
         type: string
+        required: true
+        description: The name of the subject
       - name: description
         in: formData
-        description: Subject description
-        required: true
         type: string
+        required: true
+        description: The description of the subject
     responses:
       200:
-        description: Successful operation
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                message:
-                  type: string
-                subject:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    name:
-                      type: string
-                    description:
-                      type: string
+        description: Subject created successfully
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            message:
+              type: string
       400:
-        description: Invalid input
-        content:
-          application/json:
-            schema:
+        description: Failed to create subject
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            errors:
               type: object
-              properties:
-                success:
-                  type: boolean
-                  example: false
-                errors:
-                  type: object
-      401:
-        description: Not authenticated as admin
     """
-    form = SubjectForm()
-    if form.validate_on_submit():
-        subject = Subject(
-            name=form.name.data,
-            description=form.description.data,
-            created_at=datetime.utcnow()
-        )
-        db.session.add(subject)
-        db.session.commit()
-        
-        if is_json_requested():
-            return jsonify({
-                'success': True,
-                'message': 'Subject created successfully!',
-                'subject': serialize_subject(subject)
-            })
+    # Determine if the request is an API call (JSON) or a form submission
+    is_api_request = request.is_json or request.headers.get('Content-Type') == 'application/json'
+    
+    # Create form with CSRF disabled for API requests, enabled for form submissions
+    form = SubjectForm.with_csrf(enabled=not is_api_request)
+    
+    if is_api_request:
+        # Handle API request (JSON)
+        data = request.get_json()
+        form = SubjectForm.with_csrf(enabled=False, formdata=None, data=data)
+    else:
+        # Handle form submission (with CSRF protection)
+        # Ensure csrf_token is in session
+        if 'csrf_token' not in session:
+            session['csrf_token'] = generate_csrf()
             
-        flash('Subject created successfully!', 'success')
-        return redirect(url_for('admin.subject_list'))
-        
-    if is_json_requested() and request.method == 'POST':
-        return jsonify({
-            'success': False,
-            'errors': form.errors
-        }), 400
-        
-    return render_template('admin/subjects/form.html', 
-                           title='Create Subject',
-                           form=form,
-                           action='Create')
+    if request.method == 'POST':
+        if is_api_request:
+            # Process API request
+            if form.validate():
+                # Create subject
+                subject = Subject(
+                    name=form.name.data,
+                    description=form.description.data
+                )
+                db.session.add(subject)
+                db.session.commit()
+                return jsonify({
+                    'success': True,
+                    'message': 'Subject created successfully'
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'errors': form.errors
+                }), 400
+        else:
+            # Process form submission
+            if form.validate_on_submit():
+                subject = Subject(
+                    name=form.name.data,
+                    description=form.description.data
+                )
+                db.session.add(subject)
+                db.session.commit()
+                flash('Subject created successfully', 'success')
+                return redirect(url_for('admin.subjects'))
+    
+    return render_template('admin/subjects/form.html', form=form, action='Create')
 
 @admin.route('/subjects/<int:id>', methods=['GET'])
 @admin_required
@@ -290,7 +293,7 @@ def subject_detail(id):
     """
     subject = Subject.query.get_or_404(id)
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'subject': serialize_subject(subject),
@@ -298,104 +301,102 @@ def subject_detail(id):
         })
     return redirect(url_for('admin.subject_edit', id=id))
 
-@admin.route('/subjects/edit/<int:id>', methods=['GET', 'POST'])
+@admin.route('/subjects/<int:id>/edit', methods=['GET', 'POST'])
 @admin_required
-@csrf_protected
 def subject_edit(id):
     """
-    Edit Subject
+    Edit an existing subject
     ---
     tags:
-      - admin
-    summary: Update an existing subject
-    description: Updates an existing subject with the provided data
+      - Admin - Subjects
+    summary: Edit an existing subject
+    description: Edit an existing subject with the provided id
     security:
-      - session: []
-    consumes:
-      - application/json
-      - application/x-www-form-urlencoded
+      - ApiKeyAuth: []
     parameters:
       - name: id
         in: path
-        description: Subject ID
+        type: integer
         required: true
-        schema:
-          type: integer
+        description: The id of the subject to edit
       - name: name
         in: formData
-        description: Subject name
-        required: true
         type: string
+        required: true
+        description: The updated name of the subject
       - name: description
         in: formData
-        description: Subject description
-        required: true
         type: string
+        required: true
+        description: The updated description of the subject
     responses:
       200:
-        description: Successful operation
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                success:
-                  type: boolean
-                message:
-                  type: string
-                subject:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    name:
-                      type: string
-                    description:
-                      type: string
+        description: Subject updated successfully
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            message:
+              type: string
       400:
-        description: Invalid input
-        content:
-          application/json:
-            schema:
+        description: Failed to update subject
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            errors:
               type: object
-              properties:
-                success:
-                  type: boolean
-                  example: false
-                errors:
-                  type: object
-      401:
-        description: Not authenticated as admin
       404:
         description: Subject not found
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            message:
+              type: string
     """
     subject = Subject.query.get_or_404(id)
-    form = SubjectForm(obj=subject)
-    if form.validate_on_submit():
-        subject.name = form.name.data
-        subject.description = form.description.data
-        db.session.commit()
-        
-        if is_json_requested():
-            return jsonify({
-                'success': True,
-                'message': 'Subject updated successfully!',
-                'subject': serialize_subject(subject)
-            })
-            
-        flash('Subject updated successfully!', 'success')
-        return redirect(url_for('admin.subject_list'))
-        
-    if is_json_requested() and request.method == 'POST':
-        return jsonify({
-            'success': False,
-            'errors': form.errors
-        }), 400
-        
-    return render_template('admin/subjects/form.html', 
-                           title='Edit Subject',
-                           form=form,
-                           action='Edit')
+    
+    # Determine if the request is an API call (JSON) or a form submission
+    is_api_request = request.is_json or request.headers.get('Content-Type') == 'application/json'
+    
+    # Create form with CSRF disabled for API requests, enabled for form submissions
+    if is_api_request:
+        data = request.get_json()
+        form = SubjectForm.with_csrf(enabled=False, formdata=None, data=data, obj=subject)
+    else:
+        form = SubjectForm(obj=subject)
+        # Ensure csrf_token is in session
+        if 'csrf_token' not in session:
+            session['csrf_token'] = generate_csrf()
+    
+    if request.method == 'POST':
+        if is_api_request:
+            # Process API request
+            if form.validate():
+                form.populate_obj(subject)
+                db.session.commit()
+                return jsonify({
+                    'success': True,
+                    'message': 'Subject updated successfully'
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'errors': form.errors
+                }), 400
+        else:
+            # Process form submission
+            if form.validate_on_submit():
+                form.populate_obj(subject)
+                db.session.commit()
+                flash('Subject updated successfully', 'success')
+                return redirect(url_for('admin.subjects'))
+    
+    return render_template('admin/subjects/form.html', form=form, action='Edit')
 
 @admin.route('/subjects/delete/<int:id>', methods=['POST', 'DELETE'])
 @admin_required
@@ -438,7 +439,7 @@ def subject_delete(id):
     db.session.delete(subject)
     db.session.commit()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'message': 'Subject deleted successfully!'
@@ -556,7 +557,7 @@ def chapter_list():
     """
     chapters = Chapter.query.all()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'count': len(chapters),
@@ -650,7 +651,7 @@ def chapter_create():
         db.session.add(chapter)
         db.session.commit()
         
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': True,
                 'message': 'Chapter created successfully!',
@@ -660,7 +661,7 @@ def chapter_create():
         flash('Chapter created successfully!', 'success')
         return redirect(url_for('admin.chapter_list'))
         
-    if is_json_requested() and request.method == 'POST':
+    if is_json_request() and request.method == 'POST':
         return jsonify({
             'success': False,
             'errors': form.errors
@@ -676,7 +677,7 @@ def chapter_create():
 def chapter_detail(id):
     chapter = Chapter.query.get_or_404(id)
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'chapter': serialize_chapter(chapter),
@@ -698,7 +699,7 @@ def chapter_edit(id):
         chapter.subject_id = form.subject_id.data
         db.session.commit()
         
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': True,
                 'message': 'Chapter updated successfully!',
@@ -708,7 +709,7 @@ def chapter_edit(id):
         flash('Chapter updated successfully!', 'success')
         return redirect(url_for('admin.chapter_list'))
         
-    if is_json_requested() and request.method == 'POST':
+    if is_json_request() and request.method == 'POST':
         return jsonify({
             'success': False,
             'errors': form.errors
@@ -727,7 +728,7 @@ def chapter_delete(id):
     db.session.delete(chapter)
     db.session.commit()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'message': 'Chapter deleted successfully!'
@@ -787,7 +788,7 @@ def quiz_list():
     """
     quizzes = Quiz.query.all()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'count': len(quizzes),
@@ -898,7 +899,7 @@ def quiz_create():
         db.session.add(quiz)
         db.session.commit()
         
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': True,
                 'message': 'Quiz created successfully!',
@@ -908,7 +909,7 @@ def quiz_create():
         flash('Quiz created successfully!', 'success')
         return redirect(url_for('admin.quiz_list'))
         
-    if is_json_requested() and request.method == 'POST':
+    if is_json_request() and request.method == 'POST':
         return jsonify({
             'success': False,
             'errors': form.errors
@@ -990,7 +991,7 @@ def quiz_detail(id):
     """
     quiz = Quiz.query.get_or_404(id)
     
-    if is_json_requested():
+    if is_json_request():
         questions = [serialize_question(q, include_correct_answer=True) for q in quiz.questions]
         
         return jsonify({
@@ -1078,7 +1079,7 @@ def quiz_edit(id):
         quiz.remarks = form.remarks.data
         db.session.commit()
         
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': True,
                 'message': 'Quiz updated successfully!',
@@ -1088,7 +1089,7 @@ def quiz_edit(id):
         flash('Quiz updated successfully!', 'success')
         return redirect(url_for('admin.quiz_list'))
         
-    if is_json_requested() and request.method == 'POST':
+    if is_json_request() and request.method == 'POST':
         return jsonify({
             'success': False,
             'errors': form.errors
@@ -1136,7 +1137,7 @@ def quiz_delete(id):
     db.session.delete(quiz)
     db.session.commit()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'message': 'Quiz deleted successfully!'
@@ -1206,7 +1207,7 @@ def question_list(quiz_id):
     quiz = Quiz.query.get_or_404(quiz_id)
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'quiz': serialize_quiz(quiz),
@@ -1330,7 +1331,7 @@ def question_create(quiz_id):
         db.session.add(question)
         db.session.commit()
         
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': True,
                 'message': 'Question created successfully!',
@@ -1340,7 +1341,7 @@ def question_create(quiz_id):
         flash('Question created successfully!', 'success')
         return redirect(url_for('admin.question_list', quiz_id=quiz_id))
         
-    if is_json_requested() and request.method == 'POST':
+    if is_json_request() and request.method == 'POST':
         return jsonify({
             'success': False,
             'errors': form.errors
@@ -1433,7 +1434,7 @@ def question_edit(id):
         question.correct_option = form.correct_option.data
         db.session.commit()
         
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': True,
                 'message': 'Question updated successfully!',
@@ -1443,7 +1444,7 @@ def question_edit(id):
         flash('Question updated successfully!', 'success')
         return redirect(url_for('admin.question_list', quiz_id=question.quiz_id))
         
-    if is_json_requested() and request.method == 'POST':
+    if is_json_request() and request.method == 'POST':
         return jsonify({
             'success': False,
             'errors': form.errors
@@ -1493,7 +1494,7 @@ def question_delete(id):
     db.session.delete(question)
     db.session.commit()
     
-    if is_json_requested():
+    if is_json_request():
         return jsonify({
             'success': True,
             'message': 'Question deleted successfully!'
@@ -1541,7 +1542,7 @@ def user_list():
     """
     users = User.query.all()
     
-    if is_json_requested():
+    if is_json_request():
         result = []
         for user in users:
             user_data = {
@@ -1643,7 +1644,7 @@ def search():
     search_type = request.args.get('type', 'all')
     
     if not query:
-        if is_json_requested():
+        if is_json_request():
             return jsonify({
                 'success': True,
                 'query': '',
@@ -1701,7 +1702,7 @@ def search():
             (User.username.ilike(f'%{query}%'))
         ).all()
     
-    if is_json_requested():
+    if is_json_request():
         subjects = [serialize_subject(subject) for subject in subject_results]
         chapters = [serialize_chapter(chapter) for chapter in chapter_results]
         quizzes = [serialize_quiz(quiz) for quiz in quiz_results]

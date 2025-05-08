@@ -1,11 +1,24 @@
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, Form
 from wtforms import StringField, PasswordField, SubmitField, DateField, ValidationError, TextAreaField, SelectField, IntegerField, DateTimeField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, Regexp, ValidationError
 from app.models.models import User, Admin
 from datetime import date, timedelta
 import re
 
-class LoginForm(FlaskForm):
+# Base form class that can disable CSRF
+class BaseForm(FlaskForm):
+    class Meta:
+        # By default, CSRF is enabled
+        csrf = True
+
+    @classmethod
+    def with_csrf(cls, enabled=True, **kwargs):
+        """Create a form instance with CSRF protection enabled or disabled"""
+        form = cls(**kwargs)
+        form.Meta.csrf = enabled
+        return form
+
+class LoginForm(BaseForm):
     username = StringField('Email', validators=[
         DataRequired(message="Email is required"), 
         Email(message="Please enter a valid email address")
@@ -15,7 +28,7 @@ class LoginForm(FlaskForm):
     ])
     submit = SubmitField('Login')
 
-class AdminLoginForm(FlaskForm):
+class AdminLoginForm(BaseForm):
     username = StringField('Email', validators=[
         DataRequired(message="Email is required"), 
         Email(message="Please enter a valid email address")
@@ -25,7 +38,7 @@ class AdminLoginForm(FlaskForm):
     ])
     submit = SubmitField('Login')
 
-class RegistrationForm(FlaskForm):
+class RegistrationForm(BaseForm):
     username = StringField('Email', validators=[
         DataRequired(message="Email is required"), 
         Email(message="Please enter a valid email address"),
@@ -70,7 +83,7 @@ class RegistrationForm(FlaskForm):
             raise ValidationError('Please enter a valid date of birth.')
 
 
-class SubjectForm(FlaskForm):
+class SubjectForm(BaseForm):
     name = StringField('Subject Name', validators=[
         DataRequired(message="Subject name is required"),
         Length(min=2, max=100, message="Subject name must be between 2 and 100 characters")
@@ -82,7 +95,7 @@ class SubjectForm(FlaskForm):
     submit = SubmitField('Submit')
 
 
-class ChapterForm(FlaskForm):
+class ChapterForm(BaseForm):
     name = StringField('Chapter Name', validators=[
         DataRequired(message="Chapter name is required"),
         Length(min=2, max=100, message="Chapter name must be between 2 and 100 characters")
@@ -97,7 +110,7 @@ class ChapterForm(FlaskForm):
     submit = SubmitField('Submit')
 
 
-class QuizForm(FlaskForm):
+class QuizForm(BaseForm):
     title = StringField('Quiz Title', validators=[
         DataRequired(message="Quiz title is required"),
         Length(min=3, max=100, message="Quiz title must be between 3 and 100 characters")
@@ -124,7 +137,7 @@ class QuizForm(FlaskForm):
             raise ValidationError('Quiz date cannot be in the past.')
 
 
-class QuestionForm(FlaskForm):
+class QuestionForm(BaseForm):
     question_statement = TextAreaField('Question', validators=[
         DataRequired(message="Question statement is required"),
         Length(min=10, max=500, message="Question must be between 10 and 500 characters")

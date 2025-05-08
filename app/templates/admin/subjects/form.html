@@ -1,68 +1,98 @@
-{% extends "base.html" %}
-
-{% block title %}{{ title }}{% endblock %}
+{% extends 'admin/layout.html' %}
 
 {% block content %}
 <div class="container">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h2>{{ action }} Subject</h2>
-            <p>{% if action == 'Create' %}Add a new subject to the system.{% else %}Update the subject details.{% endif %}</p>
-        </div>
-        <div class="col-md-4 text-end">
-            <a href="{{ url_for('admin.subject_list') }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Back to Subject List
-            </a>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header {% if action == 'Create' %}bg-success{% else %}bg-primary{% endif %} text-white">
-            <h5 class="card-title mb-0">{{ action }} Subject</h5>
-        </div>
-        <div class="card-body">
-            <form method="POST">
-                {{ form.hidden_tag() }}
-                <div class="mb-3">
-                    {{ form.name.label(class="form-label") }}
-                    {% if form.name.errors %}
-                        {{ form.name(class="form-control is-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.name.errors %}
-                                {{ error }}
-                            {% endfor %}
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h3>{{ action }} Subject</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="subjectForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group mb-3">
+                            <label for="name">Subject Name</label>
+                            {{ form.name(class="form-control", placeholder="Enter subject name") }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
-                    {% else %}
-                        {{ form.name(class="form-control") }}
-                    {% endif %}
-                </div>
-                
-                <div class="mb-3">
-                    {{ form.description.label(class="form-label") }}
-                    {% if form.description.errors %}
-                        {{ form.description(class="form-control is-invalid", rows=4) }}
-                        <div class="invalid-feedback">
-                            {% for error in form.description.errors %}
-                                {{ error }}
-                            {% endfor %}
+                        <div class="form-group mb-3">
+                            <label for="description">Description</label>
+                            {{ form.description(class="form-control", rows=5, placeholder="Enter subject description") }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
-                    {% else %}
-                        {{ form.description(class="form-control", rows=4) }}
-                    {% endif %}
-                    <div class="form-text">Provide a detailed description of the subject.</div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">{{ action }} Subject</button>
+                        </div>
+                    </form>
                 </div>
-                
-                <div class="mb-3">
-                    <button type="submit" class="btn {% if action == 'Create' %}btn-success{% else %}btn-primary{% endif %}">
-                        <i class="bi {% if action == 'Create' %}bi-plus-circle{% else %}bi-check-circle{% endif %}"></i> 
-                        {{ action }} Subject
-                    </button>
-                    <a href="{{ url_for('admin.subject_list') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-x-circle"></i> Cancel
-                    </a>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Form validation and AJAX submission
+        $("#subjectForm").on("submit", function(e) {
+            e.preventDefault();
+            
+            var formData = {
+                name: $("#name").val(),
+                description: $("#description").val(),
+                csrf_token: $("input[name=csrf_token]").val()
+            };
+            
+            $.ajax({
+                type: "POST",
+                url: window.location.href,
+                data: JSON.stringify(formData),
+                contentType: "application/json",
+                dataType: "json",
+                success: function(response) {
+                    if (response.success) {
+                        // Show success message
+                        toastr.success(response.message);
+                        // Redirect to subjects list after 1 second
+                        setTimeout(function() {
+                            window.location.href = "{{ url_for('admin.subjects') }}";
+                        }, 1000);
+                    } else {
+                        // Show error message
+                        toastr.error("An error occurred. Please check the form and try again.");
+                    }
+                },
+                error: function(xhr) {
+                    // Parse error response
+                    var response = xhr.responseJSON;
+                    if (response && response.errors) {
+                        // Display field-specific errors
+                        for (var field in response.errors) {
+                            $("#" + field).addClass("is-invalid");
+                            $("<div class='invalid-feedback'>" + response.errors[field] + "</div>").insertAfter("#" + field);
+                        }
+                        toastr.error("Please correct the errors in the form.");
+                    } else {
+                        toastr.error("An unexpected error occurred. Please try again.");
+                    }
+                }
+            });
+        });
+    });
+</script>
 {% endblock %} 
